@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Heart, Menu, Search, ShoppingBag, UserRound, X } from "lucide-react";
+import { ArrowUpLeft, Flame, Heart, Menu, Search, ShoppingBag, Sparkles, UserRound, X } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import { logoFallbackUrl, logoUrl } from "@/lib/assets";
 import { toFa } from "@/lib/format";
@@ -17,6 +17,7 @@ const navSlugs = [
 export function Header() {
   const navigate = useNavigate();
   const categories = useStore((state) => state.categories);
+  const products = useStore((state) => state.products);
   const cart = useStore((state) => state.cart);
   const settings = useStore((state) => state.settings);
   const setCartOpen = useStore((state) => state.setCartOpen);
@@ -28,6 +29,14 @@ export function Header() {
     () => navSlugs.map((slug) => categories.find((item) => item.slug === slug)).filter(Boolean),
     [categories],
   );
+  const searchResults = useMemo(() => {
+    const term = query.trim().toLocaleLowerCase("fa");
+    if (!term) return products.filter((product) => product.active && product.featured).slice(0, 4);
+    return products
+      .filter((product) => product.active)
+      .filter((product) => `${product.name} ${product.categoryName}`.toLocaleLowerCase("fa").includes(term))
+      .slice(0, 4);
+  }, [products, query]);
 
   function submitSearch(event: FormEvent) {
     event.preventDefault();
@@ -38,7 +47,7 @@ export function Header() {
   return (
     <>
       <div className="bg-ink px-4 py-2 text-center text-[10px] font-medium text-white sm:text-[11px]">
-        {settings.announcement}
+        <span className="inline-flex items-center gap-2"><Sparkles className="size-3 text-[#d8b36b]" />{settings.announcement}</span>
       </div>
       <header className="sticky top-0 z-40 border-b border-black/5 bg-white/95 backdrop-blur-xl">
         <div className="container-site flex h-18 items-center gap-4 lg:h-21">
@@ -60,14 +69,15 @@ export function Header() {
             />
           </Link>
 
-          <nav className="mr-auto hidden items-center gap-5 xl:gap-7 lg:flex" aria-label="منوی اصلی">
+          <nav className="mr-auto hidden h-full items-center gap-5 xl:gap-7 lg:flex" aria-label="منوی اصلی">
+            <Link to="/shop" search={{ q: "", category: "", sort: "newest" }} className="flex h-full items-center gap-1 whitespace-nowrap border-b-2 border-transparent text-[12px] font-black transition hover:border-ink xl:text-[13px]">تازه‌ها</Link>
             {navCategories.map((category) => category && (
               <Link
                 key={category.slug}
                 to="/category/$slug"
                 params={{ slug: category.slug }}
-                className="whitespace-nowrap py-7 text-[12px] font-bold transition hover:text-brand xl:text-[13px]"
-                activeProps={{ className: "text-brand" }}
+                className="flex h-full items-center whitespace-nowrap border-b-2 border-transparent text-[12px] font-bold transition hover:border-ink xl:text-[13px]"
+                activeProps={{ className: "border-brand text-brand" }}
               >
                 {category.name}
               </Link>
@@ -81,9 +91,9 @@ export function Header() {
             <Link to="/account" className="header-icon-button hidden sm:grid" aria-label="حساب کاربری">
               <UserRound />
             </Link>
-            <button type="button" className="header-icon-button hidden sm:grid" aria-label="علاقه‌مندی‌ها">
+            <Link to="/account" className="header-icon-button hidden sm:grid" aria-label="علاقه‌مندی‌ها">
               <Heart />
-            </button>
+            </Link>
             <button type="button" className="header-icon-button relative" onClick={() => setCartOpen(true)} aria-label="سبد خرید">
               <ShoppingBag />
               {cartCount > 0 && (
@@ -122,6 +132,8 @@ export function Header() {
                 {category.name}
               </Link>
             ))}
+            <Link to="/shop" search={{ q: "", category: "", sort: "newest" }} className="flex items-center justify-between border-b border-border py-3.5 text-[13px] font-black" onClick={() => setMenuOpen(false)}>تازه‌رسیده‌ها <Sparkles className="size-4 text-brand" /></Link>
+            <Link to="/shop" search={{ q: "", category: "", sort: "popular" }} className="flex items-center justify-between border-b border-border py-3.5 text-[13px] font-black" onClick={() => setMenuOpen(false)}>پرفروش‌ها <Flame className="size-4 text-brand" /></Link>
             <Link to="/shop" search={{ q: "", category: "", sort: "newest" }} className="border-b border-border py-3.5 text-[13px] font-bold" onClick={() => setMenuOpen(false)}>همه محصولات</Link>
             <Link to="/tracking" search={{ code: "" }} className="border-b border-border py-3.5 text-[13px] font-bold" onClick={() => setMenuOpen(false)}>پیگیری سفارش</Link>
             <Link to="/admin" className="mt-4 rounded-xl bg-ink px-4 py-3 text-center text-xs font-bold text-white" onClick={() => setMenuOpen(false)}>ورود به پنل مدیریت</Link>
@@ -129,11 +141,34 @@ export function Header() {
         </aside>
       </div>
 
-      <div className={`fixed inset-0 z-70 grid place-items-start bg-black/65 px-4 pt-[16vh] transition ${searchOpen ? "opacity-100" : "pointer-events-none opacity-0"}`} onClick={() => setSearchOpen(false)}>
-        <form className="mx-auto flex w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl" onSubmit={submitSearch} onClick={(event) => event.stopPropagation()}>
-          <input autoFocus={searchOpen} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="دنبال چه محصولی هستی؟" className="h-16 min-w-0 flex-1 border-0 bg-transparent px-5 text-sm outline-none" />
-          <button type="submit" className="grid w-16 place-items-center bg-brand text-white" aria-label="جستجو"><Search className="size-5" /></button>
-        </form>
+      <div className={`fixed inset-0 z-70 bg-black/62 transition ${searchOpen ? "opacity-100" : "pointer-events-none opacity-0"}`} onClick={() => setSearchOpen(false)}>
+        <div className={`bg-white transition-transform duration-300 ${searchOpen ? "translate-y-0" : "-translate-y-full"}`} onClick={(event) => event.stopPropagation()}>
+          <div className="container-site py-5 sm:py-8">
+            <div className="flex items-center justify-between gap-4">
+              <div><p className="text-[9px] font-black text-brand">جستجوی هوشمند</p><h2 className="mt-1 text-lg font-black sm:text-2xl">چی می‌خوای بپوشی؟</h2></div>
+              <button type="button" onClick={() => setSearchOpen(false)} className="grid size-10 place-items-center border border-border" aria-label="بستن جستجو"><X className="size-5" /></button>
+            </div>
+            <form className="mt-5 flex border-b-2 border-ink" onSubmit={submitSearch}>
+              <Search className="mt-4 size-5 shrink-0" />
+              <input autoFocus={searchOpen} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="مثلاً پیراهن، شلوار بگ یا کتونی..." className="h-14 min-w-0 flex-1 border-0 bg-transparent px-4 text-sm outline-none sm:text-base" />
+              <button type="submit" className="px-3 text-[11px] font-black sm:px-6">نمایش همه</button>
+            </form>
+            <div className="mt-6">
+              <div className="mb-3 flex items-center justify-between"><p className="text-[10px] font-black">{query.trim() ? "نتیجه‌های پیشنهادی" : "محبوب این روزها"}</p><span className="text-[9px] text-muted">{toFa(searchResults.length)} انتخاب</span></div>
+              {searchResults.length ? (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {searchResults.map((product) => (
+                    <Link key={product.id} to="/product/$slug" params={{ slug: product.slug }} onClick={() => setSearchOpen(false)} className="group flex min-w-0 gap-3 border border-border p-2 transition hover:border-ink">
+                      <img src={product.images[0]} alt="" className="size-16 shrink-0 object-cover sm:size-20" />
+                      <div className="min-w-0 self-center"><p className="truncate text-[10px] text-muted">{product.categoryName}</p><strong className="mt-1 line-clamp-2 text-[10px] leading-5 sm:text-[11px]">{product.name}</strong></div>
+                      <ArrowUpLeft className="mr-auto mt-auto hidden size-4 shrink-0 sm:block" />
+                    </Link>
+                  ))}
+                </div>
+              ) : <p className="border border-dashed border-border py-8 text-center text-xs text-muted">چیزی با این عبارت پیدا نشد.</p>}
+            </div>
+          </div>
+        </div>
       </div>
     </>
   );
