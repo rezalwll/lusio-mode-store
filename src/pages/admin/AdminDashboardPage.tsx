@@ -12,7 +12,7 @@ export function AdminDashboardPage() {
   const customers = useStore((state) => state.customers);
   const settings = useStore((state) => state.settings);
   const sales = orders.filter((item) => item.status !== "cancelled").reduce((sum, item) => sum + item.total, 0);
-  const lowStock = products.filter((item) => item.active && item.stock <= 5).length;
+  const lowStock = products.filter((item) => item.active && item.stock <= (settings.lowStockThreshold ?? 5)).length;
   const todayOrders = orders.filter((item) => item.createdAt.slice(0, 10) === new Date().toISOString().slice(0, 10)).length;
   const dateLabel = useMemo(() => new Intl.DateTimeFormat("fa-IR", { weekday: "long", day: "numeric", month: "long" }).format(new Date()), []);
   const salesTrend = useMemo(() => Array.from({ length: 7 }, (_, index) => {

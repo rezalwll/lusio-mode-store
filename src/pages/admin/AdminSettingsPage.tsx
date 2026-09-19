@@ -37,6 +37,7 @@ const settingsSchema = z.object({
   festivalSubtitle: z.string().min(10, "توضیح جشنواره کوتاه است"),
   festivalImage: z.string().min(4, "تصویر جشنواره لازم است"),
   monthlySalesTarget: z.string().regex(/^\d+$/, "عدد معتبر وارد کنید"),
+  lowStockThreshold: z.string().regex(/^\d+$/, "عدد معتبر وارد کنید"),
 });
 type SettingsForm = z.infer<typeof settingsSchema>;
 
@@ -68,13 +69,14 @@ export function AdminSettingsPage() {
       festivalSubtitle: settings.festivalSubtitle ?? "انتخاب‌های محدود جشنواره برای ساختن یک استایل تازه.",
       festivalImage: settings.festivalImage ?? settings.heroImage,
       monthlySalesTarget: String(settings.monthlySalesTarget ?? 500_000_000),
+      lowStockThreshold: String(settings.lowStockThreshold ?? 5),
     },
   });
   const heroImage = watch("heroImage");
   const heroMobileImage = watch("heroMobileImage");
   const festivalImage = watch("festivalImage");
 
-  function submit(values: SettingsForm) { updateSettings({ ...values, shippingCost: Number(values.shippingCost), freeShippingThreshold: Number(values.freeShippingThreshold), monthlySalesTarget: Number(values.monthlySalesTarget) }); toast.success("تنظیمات فروشگاه ذخیره شد"); }
+  function submit(values: SettingsForm) { updateSettings({ ...values, shippingCost: Number(values.shippingCost), freeShippingThreshold: Number(values.freeShippingThreshold), monthlySalesTarget: Number(values.monthlySalesTarget), lowStockThreshold: Number(values.lowStockThreshold) }); toast.success("تنظیمات فروشگاه ذخیره شد"); }
   function exportData() {
     const state = useStore.getState();
     const backup: StoreBackup = { products: state.products, categories: state.categories, orders: state.orders, customers: state.customers, coupons: state.coupons, settings: state.settings };
@@ -126,7 +128,7 @@ export function AdminSettingsPage() {
           </div>
         </section>
         <section className="rounded-2xl border border-black/5 bg-white p-5 sm:p-6"><div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-xl bg-amber-50 text-amber-700"><Truck className="size-5" /></span><div><h2 className="text-xs font-black">ارسال سفارش‌ها</h2><p className="mt-1 text-[9px] text-muted">هزینه پایه و آستانه ارسال رایگان</p></div></div><div className="mt-6 grid gap-4 sm:grid-cols-2"><Field label="هزینه ارسال (تومان)" error={errors.shippingCost?.message}><Input {...register("shippingCost")} inputMode="numeric" dir="ltr" /></Field><Field label="حداقل خرید برای ارسال رایگان" error={errors.freeShippingThreshold?.message}><Input {...register("freeShippingThreshold")} inputMode="numeric" dir="ltr" /></Field></div></section>
-        <section className="rounded-2xl border border-black/5 bg-white p-5 sm:p-6"><div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-xl bg-emerald-50 text-emerald-700"><Banknote className="size-5" /></span><div><h2 className="text-xs font-black">هدف فروش</h2><p className="mt-1 text-[9px] text-muted">هدف ماهانه‌ای که در داشبورد پایش می‌شود</p></div></div><div className="mt-6 max-w-md"><Field label="هدف فروش ماهانه (تومان)" error={errors.monthlySalesTarget?.message}><Input {...register("monthlySalesTarget")} inputMode="numeric" dir="ltr" /></Field></div></section>
+        <section className="rounded-2xl border border-black/5 bg-white p-5 sm:p-6"><div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-xl bg-emerald-50 text-emerald-700"><Banknote className="size-5" /></span><div><h2 className="text-xs font-black">هدف فروش و هشدار انبار</h2><p className="mt-1 text-[9px] text-muted">شاخص‌هایی که در داشبورد پایش می‌شوند</p></div></div><div className="mt-6 grid max-w-2xl gap-4 sm:grid-cols-2"><Field label="هدف فروش ماهانه (تومان)" error={errors.monthlySalesTarget?.message}><Input {...register("monthlySalesTarget")} inputMode="numeric" dir="ltr" /></Field><Field label="آستانه کم‌موجودی" error={errors.lowStockThreshold?.message} hint="محصول با موجودی برابر یا کمتر هشدار می‌گیرد"><Input {...register("lowStockThreshold")} inputMode="numeric" dir="ltr" /></Field></div></section>
         <div className="sticky bottom-4 flex justify-end"><Button type="submit" size="lg" className="shadow-xl"><Save className="size-4" />ذخیره همه تنظیمات</Button></div>
       </form>
       <section className="rounded-2xl border border-black/5 bg-white p-5 sm:p-6"><div><h2 className="text-xs font-black">پشتیبان‌گیری و بازیابی</h2><p className="mt-1 text-[9px] text-muted">از محصولات، سفارش‌ها و تنظیمات یک نسخه JSON تهیه کنید یا نسخه قبلی را بازیابی کنید.</p></div><div className="mt-5 flex flex-wrap gap-2"><Button variant="outline" onClick={exportData}><Download className="size-4" />دریافت پشتیبان</Button><Button variant="outline" onClick={() => fileRef.current?.click()}><Upload className="size-4" />بازیابی فایل</Button><input ref={fileRef} type="file" accept="application/json" onChange={importData} hidden /><Button variant="danger" onClick={reset}><RotateCcw className="size-4" />بازگشت به داده اولیه</Button></div></section>

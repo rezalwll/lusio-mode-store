@@ -1,5 +1,5 @@
 import { Link, Outlet, useNavigate } from "@tanstack/react-router";
-import { Bell, ChevronLeft, LayoutDashboard, ListTree, LogOut, Menu, Package, Palette, Percent, Search, Settings, ShoppingCart, Store, Tags, Users, X } from "lucide-react";
+import { Bell, ChartNoAxesCombined, ChevronLeft, LayoutDashboard, ListTree, LogOut, Menu, Package, Palette, Percent, Search, Settings, ShoppingCart, Store, Tags, Users, X } from "lucide-react";
 import { useState } from "react";
 import { logoUrl } from "@/lib/assets";
 import { cn } from "@/lib/utils";
@@ -13,6 +13,7 @@ const navigation = [
   { label: "مشتریان", to: "/admin/customers", icon: Users, exact: false },
   { label: "دسته‌بندی‌ها", to: "/admin/categories", icon: Tags, exact: false },
   { label: "کدهای تخفیف", to: "/admin/coupons", icon: Percent, exact: false },
+  { label: "گزارش‌های فروش", to: "/admin/reports", icon: ChartNoAxesCombined, exact: false },
   { label: "ظاهر و محتوا", to: "/admin/appearance", icon: Palette, exact: false },
   { label: "منو و چیدمان", to: "/admin/navigation", icon: ListTree, exact: false },
   { label: "تنظیمات و محتوا", to: "/admin/settings", icon: Settings, exact: false },
