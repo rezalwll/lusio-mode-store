@@ -1,9 +1,7 @@
-import { Outlet, createRootRoute, createRoute, createRouter } from "@tanstack/react-router";
+import { Outlet, createRootRoute, createRoute, createRouter, lazyRouteComponent } from "@tanstack/react-router";
 import { StoreLayout } from "@/components/layout/StoreLayout";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { ComingSoonPage } from "@/pages/ComingSoonPage";
-import { AdminDashboardPage } from "@/pages/admin/AdminDashboardPage";
-import { AdminOrdersPage } from "@/pages/admin/AdminOrdersPage";
 import { HomePage } from "@/pages/store/HomePage";
 import { AccountPage } from "@/pages/store/AccountPage";
 import { CartPage } from "@/pages/store/CartPage";
@@ -92,13 +90,13 @@ const adminRoute = createRoute({
   component: AdminLayout,
 });
 
-const adminIndexRoute = createRoute({ getParentRoute: () => adminRoute, path: "/", component: AdminDashboardPage });
-const adminOrdersRoute = createRoute({ getParentRoute: () => adminRoute, path: "orders", component: AdminOrdersPage });
-const adminProductsRoute = createRoute({ getParentRoute: () => adminRoute, path: "products", component: () => <ComingSoonPage title="مدیریت محصولات" /> });
-const adminCustomersRoute = createRoute({ getParentRoute: () => adminRoute, path: "customers", component: () => <ComingSoonPage title="مدیریت مشتریان" /> });
-const adminCategoriesRoute = createRoute({ getParentRoute: () => adminRoute, path: "categories", component: () => <ComingSoonPage title="مدیریت دسته‌بندی‌ها" /> });
-const adminCouponsRoute = createRoute({ getParentRoute: () => adminRoute, path: "coupons", component: () => <ComingSoonPage title="کدهای تخفیف" /> });
-const adminSettingsRoute = createRoute({ getParentRoute: () => adminRoute, path: "settings", component: () => <ComingSoonPage title="تنظیمات و محتوا" /> });
+const adminIndexRoute = createRoute({ getParentRoute: () => adminRoute, path: "/", component: lazyRouteComponent(() => import("@/pages/admin/AdminDashboardPage"), "AdminDashboardPage") });
+const adminOrdersRoute = createRoute({ getParentRoute: () => adminRoute, path: "orders", component: lazyRouteComponent(() => import("@/pages/admin/AdminOrdersPage"), "AdminOrdersPage") });
+const adminProductsRoute = createRoute({ getParentRoute: () => adminRoute, path: "products", component: lazyRouteComponent(() => import("@/pages/admin/AdminProductsPage"), "AdminProductsPage") });
+const adminCustomersRoute = createRoute({ getParentRoute: () => adminRoute, path: "customers", component: lazyRouteComponent(() => import("@/pages/admin/AdminCustomersPage"), "AdminCustomersPage") });
+const adminCategoriesRoute = createRoute({ getParentRoute: () => adminRoute, path: "categories", component: lazyRouteComponent(() => import("@/pages/admin/AdminCategoriesPage"), "AdminCategoriesPage") });
+const adminCouponsRoute = createRoute({ getParentRoute: () => adminRoute, path: "coupons", component: lazyRouteComponent(() => import("@/pages/admin/AdminCouponsPage"), "AdminCouponsPage") });
+const adminSettingsRoute = createRoute({ getParentRoute: () => adminRoute, path: "settings", component: lazyRouteComponent(() => import("@/pages/admin/AdminSettingsPage"), "AdminSettingsPage") });
 
 const routeTree = rootRoute.addChildren([
   storeRoute.addChildren([homeRoute, shopRoute, categoryRoute, productRoute, cartRoute, checkoutRoute, accountRoute, trackingRoute]),

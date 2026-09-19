@@ -146,6 +146,15 @@ interface CheckoutInput {
   total: number;
 }
 
+export interface StoreBackup {
+  products?: Product[];
+  categories?: Category[];
+  orders?: Order[];
+  customers?: Customer[];
+  coupons?: Coupon[];
+  settings?: StoreSettings;
+}
+
 interface StoreState {
   products: Product[];
   categories: Category[];
@@ -175,6 +184,7 @@ interface StoreState {
   saveCoupon: (coupon: Coupon) => void;
   deleteCoupon: (id: number) => void;
   updateSettings: (settings: Partial<StoreSettings>) => void;
+  importBackup: (backup: StoreBackup) => void;
   loginAdmin: (password: string) => boolean;
   logoutAdmin: () => void;
   resetStore: () => void;
@@ -239,6 +249,9 @@ export const useStore = create<StoreState>()(
           categories: state.categories.some((item) => item.id === category.id)
             ? state.categories.map((item) => (item.id === category.id ? category : item))
             : [category, ...state.categories],
+          products: state.products.map((product) =>
+            product.category === category.slug ? { ...product, categoryName: category.name } : product,
+          ),
         })),
       deleteCategory: (id) => set((state) => ({ categories: state.categories.filter((item) => item.id !== id) })),
       updateOrderStatus: (id, status) =>
@@ -301,6 +314,15 @@ export const useStore = create<StoreState>()(
         })),
       deleteCoupon: (id) => set((state) => ({ coupons: state.coupons.filter((item) => item.id !== id) })),
       updateSettings: (settings) => set((state) => ({ settings: { ...state.settings, ...settings } })),
+      importBackup: (backup) =>
+        set((state) => ({
+          products: Array.isArray(backup.products) ? backup.products : state.products,
+          categories: Array.isArray(backup.categories) ? backup.categories : state.categories,
+          orders: Array.isArray(backup.orders) ? backup.orders : state.orders,
+          customers: Array.isArray(backup.customers) ? backup.customers : state.customers,
+          coupons: Array.isArray(backup.coupons) ? backup.coupons : state.coupons,
+          settings: backup.settings && typeof backup.settings === "object" ? { ...state.settings, ...backup.settings } : state.settings,
+        })),
       loginAdmin: (password) => {
         const success = password === "eleven1405";
         if (success) set({ adminAuthenticated: true });
