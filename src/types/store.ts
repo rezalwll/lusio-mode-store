@@ -92,6 +92,17 @@ export interface Coupon {
   active: boolean;
 }
 
+export interface StoreNavigationItem {
+  id: string;
+  label: string;
+  mode: "category" | "search";
+  target: string;
+  fallbackSlug: string;
+  active: boolean;
+}
+
+export type HomeSectionKey = "new" | "sale" | "categories" | "festival" | "editorial" | "best" | "trust";
+
 export interface StoreSettings {
   storeName: string;
   announcement: string;
@@ -157,4 +168,6 @@ export interface StoreSettings {
   themeMint?: string;
   themeBlush?: string;
   lowStockThreshold?: number;
+  navigationItems?: StoreNavigationItem[];
+  homeSectionOrder?: HomeSectionKey[];
 }

@@ -15,7 +15,8 @@ import { ProductCard } from "@/components/product/ProductCard";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { productPlaceholderUrl } from "@/lib/assets";
 import { toFa } from "@/lib/format";
-import { matchesStorefrontCategory, storefrontCategories, type StorefrontCategory } from "@/lib/storefront-categories";
+import { matchesStorefrontCategory, resolveStorefrontCategories, type StorefrontCategory } from "@/lib/storefront-categories";
+import type { HomeSectionKey } from "@/types/store";
 import { useStore } from "@/store/use-store";
 
 const categoryLayout = [
@@ -50,11 +51,17 @@ export function HomePage() {
     () => activeProducts.filter((item) => item.regularPrice > item.price).sort((a, b) => (b.regularPrice - b.price) - (a.regularPrice - a.price)).slice(0, 8),
     [activeProducts],
   );
-  const homeCategories = useMemo(() => storefrontCategories.map((category) => {
+  const navigationItems = useMemo(() => resolveStorefrontCategories(settings.navigationItems), [settings.navigationItems]);
+  const homeCategories = useMemo(() => navigationItems.map((category) => {
     const matchingProducts = activeProducts.filter((product) => matchesStorefrontCategory(product, category));
     const fallbackCategory = categories.find((item) => item.slug === category.fallbackSlug);
     return { ...category, count: matchingProducts.length, image: matchingProducts[0]?.images[0] || fallbackCategory?.image || productPlaceholderUrl };
-  }), [activeProducts, categories]);
+  }), [activeProducts, categories, navigationItems]);
+  const sectionOrder = settings.homeSectionOrder ?? ["new", "sale", "categories", "festival", "editorial", "best", "trust"];
+  const orderOf = (section: HomeSectionKey) => {
+    const index = sectionOrder.indexOf(section);
+    return index === -1 ? sectionOrder.length : index;
+  };
   const spotlight = newArrivals[0];
   const editorialProduct = newArrivals.find((item) => item.category === "men-shirt") ?? newArrivals[4];
   const festivalProduct = bestSellers[1] ?? newArrivals[1];
@@ -116,7 +123,8 @@ export function HomePage() {
         </div>
       </section>
 
-      {settings.showNewArrivals !== false && <section className="container-site py-16 sm:py-24">
+      <div className="flex flex-col">
+      {settings.showNewArrivals !== false && <section className="container-site py-16 sm:py-24" style={{ order: orderOf("new") }}>
         <div className="mb-8 flex items-end justify-between gap-4">
           <div><p className="section-eyebrow">{settings.newArrivalsEyebrow || "JUST IN / تازه رسیده"}</p><h2 className="section-title">{settings.newArrivalsTitle || "اولین نفر باش که می‌پوشد"}</h2></div>
           <Link to="/shop" search={{ q: "", category: "", sort: "newest" }} className="flex shrink-0 items-center gap-2 text-xs font-bold hover:text-brand">همه تازه‌ها <ArrowLeft className="size-4" /></Link>
@@ -126,7 +134,7 @@ export function HomePage() {
         </div>
       </section>}
 
-      {settings.showSaleProducts !== false && saleProducts.length > 0 && <section className="bg-[#f7e9e5]">
+      {settings.showSaleProducts !== false && saleProducts.length > 0 && <section className="bg-[#f7e9e5]" style={{ order: orderOf("sale") }}>
         <div className="container-site py-16 sm:py-24">
           <div className="mb-8 flex items-end justify-between gap-4">
             <div><p className="section-eyebrow flex items-center gap-1.5"><BadgePercent className="size-3.5" /> {settings.saleEyebrow || "SALE / تخفیف‌های فعال"}</p><h2 className="section-title">{settings.saleTitle || "انتخاب‌های خوش‌قیمت این هفته"}</h2></div>
@@ -136,7 +144,7 @@ export function HomePage() {
         </div>
       </section>}
 
-      {settings.showCategories !== false && <section className="container-site pb-16 sm:pb-24">
+      {settings.showCategories !== false && <section className="container-site pb-16 sm:pb-24" style={{ order: orderOf("categories") }}>
         <div className="mb-8 flex items-end justify-between">
           <div><p className="section-eyebrow">{settings.categoriesEyebrow || "SHOP BY MOOD"}</p><h2 className="section-title">{settings.categoriesTitle || "از حال‌وهوایت شروع کن"}</h2></div>
           <p className="hidden max-w-sm text-left text-[11px] leading-6 text-muted sm:block">{settings.categoriesDescription || "دسته‌بندی‌هایی که هر کدام یک استایل کامل را می‌سازند."}</p>
@@ -155,7 +163,7 @@ export function HomePage() {
         </div>
       </section>}
 
-      {settings.showFestival !== false && festivalProduct && <section className="container-site pb-16 sm:pb-24">
+      {settings.showFestival !== false && festivalProduct && <section className="container-site pb-16 sm:pb-24" style={{ order: orderOf("festival") }}>
         <div className="grid min-h-[520px] overflow-hidden border border-black/5 bg-[#f1e7df] lg:grid-cols-[.8fr_1.2fr]">
           <div className="flex flex-col justify-between bg-mint p-7 sm:p-10 lg:p-14">
             <div className="flex items-center justify-between text-[9px] font-black text-black/45"><span>{settings.festivalEyebrow || "COLOR FEST / جشنواره رنگ"}</span><Palette className="size-5" /></div>
@@ -176,7 +184,7 @@ export function HomePage() {
       </section>}
 
       {editorialProduct && settings.showEditorial !== false && (
-        <section className="bg-[#171717] text-white">
+        <section className="bg-[#171717] text-white" style={{ order: orderOf("editorial") }}>
           <div className="container-site grid min-h-[560px] lg:grid-cols-[.8fr_1.2fr]">
             <div className="flex flex-col justify-between py-10 lg:py-14 lg:pl-14">
               <p className="text-[10px] font-bold tracking-[.18em] text-white/48" dir="ltr">THE ELEVEN UNIFORM / 02</p>
@@ -199,7 +207,7 @@ export function HomePage() {
         </section>
       )}
 
-      {settings.showBestSellers !== false && <section className="container-site py-16 sm:py-24">
+      {settings.showBestSellers !== false && <section className="container-site py-16 sm:py-24" style={{ order: orderOf("best") }}>
         <div className="mb-8 flex items-end justify-between gap-4">
           <div><p className="section-eyebrow">{settings.bestSellersEyebrow || "BEST SELLERS"}</p><h2 className="section-title">{settings.bestSellersTitle || "انتخاب‌های امتحان‌پس‌داده"}</h2></div>
           <Link to="/shop" search={{ q: "", category: "", sort: "popular" }} className="flex shrink-0 items-center gap-2 text-xs font-bold hover:text-brand">همه پرفروش‌ها <ArrowLeft className="size-4" /></Link>
@@ -207,7 +215,7 @@ export function HomePage() {
         <ProductGrid products={bestSellers} />
       </section>}
 
-      <section className="border-y border-border bg-[#f6f5f1]">
+      <section className="border-y border-border bg-[#f6f5f1]" style={{ order: orderOf("trust") }}>
         <div className="container-site grid grid-cols-2 gap-y-9 py-11 lg:grid-cols-4 lg:py-14">
           {[
             [Truck, settings.trustShippingTitle || "ارسال سریع", settings.trustShippingText || "تحویل امن به سراسر ایران"],
@@ -226,6 +234,7 @@ export function HomePage() {
           })}
         </div>
       </section>
+      </div>
     </>
   );
 }

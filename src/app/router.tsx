@@ -97,11 +97,12 @@ const adminCustomersRoute = createRoute({ getParentRoute: () => adminRoute, path
 const adminCategoriesRoute = createRoute({ getParentRoute: () => adminRoute, path: "categories", component: lazyRouteComponent(() => import("@/pages/admin/AdminCategoriesPage"), "AdminCategoriesPage") });
 const adminCouponsRoute = createRoute({ getParentRoute: () => adminRoute, path: "coupons", component: lazyRouteComponent(() => import("@/pages/admin/AdminCouponsPage"), "AdminCouponsPage") });
 const adminAppearanceRoute = createRoute({ getParentRoute: () => adminRoute, path: "appearance", component: lazyRouteComponent(() => import("@/pages/admin/AdminAppearancePage"), "AdminAppearancePage") });
+const adminNavigationRoute = createRoute({ getParentRoute: () => adminRoute, path: "navigation", component: lazyRouteComponent(() => import("@/pages/admin/AdminNavigationPage"), "AdminNavigationPage") });
 const adminSettingsRoute = createRoute({ getParentRoute: () => adminRoute, path: "settings", component: lazyRouteComponent(() => import("@/pages/admin/AdminSettingsPage"), "AdminSettingsPage") });
 
 const routeTree = rootRoute.addChildren([
   storeRoute.addChildren([homeRoute, shopRoute, categoryRoute, productRoute, cartRoute, checkoutRoute, accountRoute, trackingRoute]),
-  adminRoute.addChildren([adminIndexRoute, adminOrdersRoute, adminProductsRoute, adminCustomersRoute, adminCategoriesRoute, adminCouponsRoute, adminAppearanceRoute, adminSettingsRoute]),
+  adminRoute.addChildren([adminIndexRoute, adminOrdersRoute, adminProductsRoute, adminCustomersRoute, adminCategoriesRoute, adminCouponsRoute, adminAppearanceRoute, adminNavigationRoute, adminSettingsRoute]),
 ]);
 
 export const router = createRouter({ routeTree, scrollRestoration: true });

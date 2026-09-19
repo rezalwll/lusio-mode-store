@@ -187,6 +187,17 @@ const initialSettings: StoreSettings = {
   themeMint: "#b6dfd8",
   themeBlush: "#e8c7d7",
   lowStockThreshold: 5,
+  navigationItems: [
+    { id: "nav-tshirt", label: "تیشرت", mode: "category", target: "tshirt", fallbackSlug: "men-t-shirts-and-sweatshirts", active: true },
+    { id: "nav-jogger", label: "شلوار اسلش", mode: "search", target: "اسلش", fallbackSlug: "men-pants", active: true },
+    { id: "nav-mom", label: "شلوار مام فیت", mode: "search", target: "مام", fallbackSlug: "men-pants", active: true },
+    { id: "nav-baggy", label: "شلوار بگ", mode: "search", target: "بگ", fallbackSlug: "men-pants", active: true },
+    { id: "nav-hoodie", label: "هودی و سوییشرت", mode: "category", target: "men-sweatshirts-and-hoodies", fallbackSlug: "men-sweatshirts-and-hoodies", active: true },
+    { id: "nav-set", label: "ست مردانه", mode: "category", target: "men-set", fallbackSlug: "men-set", active: true },
+    { id: "nav-shoes", label: "کتونی", mode: "category", target: "men-shoes-and-boots", fallbackSlug: "men-shoes-and-boots", active: true },
+    { id: "nav-dors", label: "دورس", mode: "search", target: "دورس", fallbackSlug: "men-sweatshirts-and-hoodies", active: true },
+  ],
+  homeSectionOrder: ["new", "sale", "categories", "festival", "editorial", "best", "trust"],
 };
 
 interface CheckoutInput {

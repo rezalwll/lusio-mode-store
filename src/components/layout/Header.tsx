@@ -3,7 +3,7 @@ import { ArrowUpLeft, Flame, Heart, Menu, Search, ShoppingBag, Sparkles, UserRou
 import { useMemo, useState, type FormEvent } from "react";
 import { logoFallbackUrl, logoUrl } from "@/lib/assets";
 import { toFa } from "@/lib/format";
-import { storefrontCategories, type StorefrontCategory } from "@/lib/storefront-categories";
+import { resolveStorefrontCategories, type StorefrontCategory } from "@/lib/storefront-categories";
 import { useStore } from "@/store/use-store";
 
 function CategoryLink({ category, className, onClick }: { category: StorefrontCategory; className: string; onClick?: () => void }) {
@@ -23,6 +23,7 @@ export function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const cartCount = cart.reduce((sum, line) => sum + line.quantity, 0);
+  const navigationItems = resolveStorefrontCategories(settings.navigationItems);
   const searchResults = useMemo(() => {
     const term = query.trim().toLocaleLowerCase("fa");
     if (!term) return products.filter((product) => product.active && product.featured).slice(0, 4);
@@ -64,7 +65,7 @@ export function Header() {
           </Link>
 
           <nav className="absolute left-1/2 hidden h-full -translate-x-1/2 items-center justify-center gap-3 xl:flex 2xl:gap-5" aria-label="منوی اصلی">
-            {storefrontCategories.map((category) => <CategoryLink key={category.label} category={category} className="flex h-full items-center whitespace-nowrap border-b-2 border-transparent text-[10px] font-bold transition hover:border-brand hover:text-brand 2xl:text-[11px]" />)}
+            {navigationItems.map((category) => <CategoryLink key={category.label} category={category} className="flex h-full items-center whitespace-nowrap border-b-2 border-transparent text-[10px] font-bold transition hover:border-brand hover:text-brand 2xl:text-[11px]" />)}
           </nav>
 
           <div className="mr-auto flex items-center gap-0.5 xl:gap-1">
@@ -104,7 +105,7 @@ export function Header() {
             </button>
           </div>
           <nav className="mt-4 grid" aria-label="منوی موبایل">
-            {storefrontCategories.map((category) => <CategoryLink key={category.label} category={category} className="border-b border-border py-3.5 text-[13px] font-bold" onClick={() => setMenuOpen(false)} />)}
+            {navigationItems.map((category) => <CategoryLink key={category.label} category={category} className="border-b border-border py-3.5 text-[13px] font-bold" onClick={() => setMenuOpen(false)} />)}
             <Link to="/shop" search={{ q: "", category: "", sort: "newest" }} className="flex items-center justify-between border-b border-border py-3.5 text-[13px] font-black" onClick={() => setMenuOpen(false)}>تازه‌رسیده‌ها <Sparkles className="size-4 text-brand" /></Link>
             <Link to="/shop" search={{ q: "", category: "", sort: "popular" }} className="flex items-center justify-between border-b border-border py-3.5 text-[13px] font-black" onClick={() => setMenuOpen(false)}>پرفروش‌ها <Flame className="size-4 text-brand" /></Link>
             <Link to="/shop" search={{ q: "", category: "", sort: "newest" }} className="border-b border-border py-3.5 text-[13px] font-bold" onClick={() => setMenuOpen(false)}>همه محصولات</Link>
