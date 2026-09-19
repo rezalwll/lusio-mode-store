@@ -154,9 +154,11 @@ interface StoreState {
   customers: Customer[];
   coupons: Coupon[];
   settings: StoreSettings;
+  appliedCoupon: string;
   cartOpen: boolean;
   adminAuthenticated: boolean;
   setCartOpen: (open: boolean) => void;
+  setAppliedCoupon: (code: string) => void;
   addToCart: (line: CartLine) => void;
   removeFromCart: (productId: number, size: string, color: string) => void;
   setCartQuantity: (productId: number, size: string, color: string, quantity: number) => void;
@@ -191,9 +193,11 @@ export const useStore = create<StoreState>()(
       customers: initialCustomers,
       coupons: initialCoupons,
       settings: initialSettings,
+      appliedCoupon: "",
       cartOpen: false,
       adminAuthenticated: false,
       setCartOpen: (cartOpen) => set({ cartOpen }),
+      setAppliedCoupon: (appliedCoupon) => set({ appliedCoupon }),
       addToCart: (line) => {
         set((state) => {
           const key = lineKey(line);
@@ -220,7 +224,7 @@ export const useStore = create<StoreState>()(
             )
             .filter((item) => item.quantity > 0),
         })),
-      clearCart: () => set({ cart: [] }),
+      clearCart: () => set({ cart: [], appliedCoupon: "" }),
       saveProduct: (product) =>
         set((state) => ({
           products: state.products.some((item) => item.id === product.id)
@@ -277,6 +281,7 @@ export const useStore = create<StoreState>()(
             return line ? { ...product, stock: Math.max(0, product.stock - line.quantity) } : product;
           }),
           cart: [],
+          appliedCoupon: "",
         });
         return id;
       },
@@ -311,6 +316,7 @@ export const useStore = create<StoreState>()(
           customers: initialCustomers,
           coupons: initialCoupons,
           settings: initialSettings,
+          appliedCoupon: "",
         }),
     }),
     {
@@ -324,6 +330,7 @@ export const useStore = create<StoreState>()(
         customers: state.customers,
         coupons: state.coupons,
         settings: state.settings,
+        appliedCoupon: state.appliedCoupon,
         adminAuthenticated: state.adminAuthenticated,
       }),
     },

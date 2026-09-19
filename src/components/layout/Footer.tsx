@@ -23,7 +23,7 @@ export function Footer() {
           <h3 className="text-sm font-black">دسترسی سریع</h3>
           <div className="mt-4 grid gap-2.5 text-xs text-white/55">
             <Link to="/shop" search={{ q: "", category: "", sort: "newest" }} className="hover:text-white">فروشگاه</Link>
-            <Link to="/tracking" className="hover:text-white">پیگیری سفارش</Link>
+            <Link to="/tracking" search={{ code: "" }} className="hover:text-white">پیگیری سفارش</Link>
             <Link to="/account" className="hover:text-white">حساب کاربری</Link>
             <Link to="/cart" className="hover:text-white">سبد خرید</Link>
           </div>

@@ -123,7 +123,7 @@ export function Header() {
               </Link>
             ))}
             <Link to="/shop" search={{ q: "", category: "", sort: "newest" }} className="border-b border-border py-3.5 text-[13px] font-bold" onClick={() => setMenuOpen(false)}>همه محصولات</Link>
-            <Link to="/tracking" className="border-b border-border py-3.5 text-[13px] font-bold" onClick={() => setMenuOpen(false)}>پیگیری سفارش</Link>
+            <Link to="/tracking" search={{ code: "" }} className="border-b border-border py-3.5 text-[13px] font-bold" onClick={() => setMenuOpen(false)}>پیگیری سفارش</Link>
             <Link to="/admin" className="mt-4 rounded-xl bg-ink px-4 py-3 text-center text-xs font-bold text-white" onClick={() => setMenuOpen(false)}>ورود به پنل مدیریت</Link>
           </nav>
         </aside>

@@ -2,8 +2,12 @@ import { Outlet, createRootRoute, createRoute, createRouter } from "@tanstack/re
 import { StoreLayout } from "@/components/layout/StoreLayout";
 import { ComingSoonPage } from "@/pages/ComingSoonPage";
 import { HomePage } from "@/pages/store/HomePage";
+import { AccountPage } from "@/pages/store/AccountPage";
+import { CartPage } from "@/pages/store/CartPage";
+import { CheckoutPage } from "@/pages/store/CheckoutPage";
 import { ProductPage } from "@/pages/store/ProductPage";
 import { ShopPage } from "@/pages/store/ShopPage";
+import { TrackingPage } from "@/pages/store/TrackingPage";
 
 function RootComponent() {
   return <Outlet />;
@@ -64,10 +68,20 @@ function ProductRouteView() {
   return <ProductPage slug={slug} />;
 }
 
-const cartRoute = createRoute({ getParentRoute: () => storeRoute, path: "cart", component: () => <ComingSoonPage title="سبد خرید" /> });
-const checkoutRoute = createRoute({ getParentRoute: () => storeRoute, path: "checkout", component: () => <ComingSoonPage title="تسویه حساب" /> });
-const accountRoute = createRoute({ getParentRoute: () => storeRoute, path: "account", component: () => <ComingSoonPage title="حساب کاربری" /> });
-const trackingRoute = createRoute({ getParentRoute: () => storeRoute, path: "tracking", component: () => <ComingSoonPage title="پیگیری سفارش" /> });
+const cartRoute = createRoute({ getParentRoute: () => storeRoute, path: "cart", component: CartPage });
+const checkoutRoute = createRoute({ getParentRoute: () => storeRoute, path: "checkout", component: CheckoutPage });
+const accountRoute = createRoute({ getParentRoute: () => storeRoute, path: "account", component: AccountPage });
+const trackingRoute = createRoute({
+  getParentRoute: () => storeRoute,
+  path: "tracking",
+  validateSearch: (search: Record<string, unknown>) => ({ code: typeof search.code === "string" ? search.code : "" }),
+  component: TrackingRouteView,
+});
+
+function TrackingRouteView() {
+  const { code } = trackingRoute.useSearch();
+  return <TrackingPage initialCode={code} />;
+}
 
 const adminRoute = createRoute({
   getParentRoute: () => rootRoute,
