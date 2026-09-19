@@ -134,6 +134,16 @@ const initialSettings: StoreSettings = {
   heroSubtitle: "انتخاب‌های جدید برای مردانی که متفاوت دیده می‌شوند.",
   heroImage: "https://elevenstyle.ir/wp-content/uploads/2026/09/Tshirtfallbannerdesktop-scaled.webp",
   heroMobileImage: "https://elevenstyle.ir/wp-content/uploads/2026/09/tshirtfallbannermobile-1.webp",
+  heroEyebrow: "انتخاب تازه ادیتورها",
+  heroPrimaryCta: "خرید کالکشن",
+  storyTitle: "لباس‌هایی برای هر روز؛ جزئیاتی برای متفاوت‌بودن.",
+  editorialTitle: "کمتر انتخاب کن، بهتر ست کن.",
+  editorialText: "یک کمد حساب‌شده با رنگ‌های خنثی و برش‌های درست؛ قطعه‌هایی که از صبح تا شب کنار هم کار می‌کنند.",
+  showNewArrivals: true,
+  showCategories: true,
+  showEditorial: true,
+  showBestSellers: true,
+  monthlySalesTarget: 500_000_000,
 };
 
 interface CheckoutInput {
@@ -178,6 +188,7 @@ interface StoreState {
   saveCategory: (category: Category) => void;
   deleteCategory: (id: number) => void;
   updateOrderStatus: (id: string, status: OrderStatus) => void;
+  updateOrder: (id: string, changes: Partial<Order>) => void;
   placeOrder: (input: CheckoutInput) => string;
   saveCustomer: (customer: Customer) => void;
   toggleCustomer: (id: number) => void;
@@ -256,6 +267,8 @@ export const useStore = create<StoreState>()(
       deleteCategory: (id) => set((state) => ({ categories: state.categories.filter((item) => item.id !== id) })),
       updateOrderStatus: (id, status) =>
         set((state) => ({ orders: state.orders.map((order) => (order.id === id ? { ...order, status } : order)) })),
+      updateOrder: (id, changes) =>
+        set((state) => ({ orders: state.orders.map((order) => (order.id === id ? { ...order, ...changes } : order)) })),
       placeOrder: (input) => {
         const state = get();
         const numericIds = state.orders.map((order) => Number(order.id.replace(/\D/g, ""))).filter(Boolean);

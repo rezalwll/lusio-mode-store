@@ -64,6 +64,7 @@ export interface Order {
   paymentStatus: PaymentStatus;
   shippingMethod: string;
   trackingCode?: string;
+  internalNote?: string;
   items: Array<CartLine & { name: string; price: number }>;
 }
 
@@ -103,4 +104,14 @@ export interface StoreSettings {
   heroSubtitle: string;
   heroImage: string;
   heroMobileImage: string;
+  heroEyebrow?: string;
+  heroPrimaryCta?: string;
+  storyTitle?: string;
+  editorialTitle?: string;
+  editorialText?: string;
+  showNewArrivals?: boolean;
+  showCategories?: boolean;
+  showEditorial?: boolean;
+  showBestSellers?: boolean;
+  monthlySalesTarget?: number;
 }

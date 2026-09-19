@@ -63,11 +63,11 @@ export function HomePage() {
                 <span>ELEVEN / EDIT 01</span>
                 <span>2026</span>
               </div>
-              <span className="mb-4 flex w-fit items-center gap-2 text-[11px] font-bold"><Sparkles className="size-4" /> انتخاب تازه ادیتورها</span>
+              <span className="mb-4 flex w-fit items-center gap-2 text-[11px] font-bold"><Sparkles className="size-4" /> {settings.heroEyebrow || "انتخاب تازه ادیتورها"}</span>
               <h1 className="max-w-xl text-[clamp(2.5rem,6vw,5rem)] leading-[1.06] font-black tracking-[-.05em]">{settings.heroTitle}</h1>
               <p className="mt-5 max-w-lg text-xs leading-7 text-white/80 sm:text-sm">{settings.heroSubtitle}</p>
               <div className="mt-7 flex flex-wrap gap-3">
-                <Link to="/shop" search={{ q: "", category: "", sort: "newest" }} className="inline-flex h-12 items-center gap-3 bg-white px-6 text-xs font-black text-ink transition hover:bg-[#eee9e2]">خرید کالکشن <ArrowLeft className="size-4" /></Link>
+                <Link to="/shop" search={{ q: "", category: "", sort: "newest" }} className="inline-flex h-12 items-center gap-3 bg-white px-6 text-xs font-black text-ink transition hover:bg-[#eee9e2]">{settings.heroPrimaryCta || "خرید کالکشن"} <ArrowLeft className="size-4" /></Link>
                 <Link to="/shop" search={{ q: "", category: "", sort: "popular" }} className="inline-flex h-12 items-center gap-3 border border-white/50 px-6 text-xs font-bold text-white transition hover:bg-white hover:text-ink">پرفروش‌های هفته</Link>
               </div>
             </div>
@@ -77,7 +77,7 @@ export function HomePage() {
             <div className="flex flex-col justify-between bg-[#ded9cf] p-7 sm:p-9">
               <div className="flex items-start justify-between text-[10px] font-bold text-black/45"><span>داستان این فصل</span><span dir="ltr">01—26</span></div>
               <div>
-                <p className="max-w-[15rem] text-2xl leading-[1.45] font-black tracking-[-.03em] sm:text-3xl">لباس‌هایی برای هر روز؛ جزئیاتی برای متفاوت‌بودن.</p>
+                <p className="max-w-[15rem] text-2xl leading-[1.45] font-black tracking-[-.03em] sm:text-3xl">{settings.storyTitle || "لباس‌هایی برای هر روز؛ جزئیاتی برای متفاوت‌بودن."}</p>
                 <Link to="/category/$slug" params={{ slug: "men-shirt" }} className="mt-5 inline-flex items-center gap-2 border-b border-ink pb-1 text-[11px] font-black">دیدن ادیت روزمره <ArrowUpLeft className="size-4" /></Link>
               </div>
             </div>
@@ -105,7 +105,7 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="container-site py-16 sm:py-24">
+      {settings.showNewArrivals !== false && <section className="container-site py-16 sm:py-24">
         <div className="mb-8 flex items-end justify-between gap-4">
           <div><p className="section-eyebrow">JUST IN / تازه رسیده</p><h2 className="section-title">اولین نفر باش که می‌پوشد</h2></div>
           <Link to="/shop" search={{ q: "", category: "", sort: "newest" }} className="flex shrink-0 items-center gap-2 text-xs font-bold hover:text-brand">همه تازه‌ها <ArrowLeft className="size-4" /></Link>
@@ -113,9 +113,9 @@ export function HomePage() {
         <div className="grid grid-cols-2 gap-x-3 gap-y-8 sm:grid-cols-3 lg:grid-cols-4 xl:gap-x-5">
           {newArrivals.slice(0, 4).map((product) => <ProductCard key={product.id} product={product} />)}
         </div>
-      </section>
+      </section>}
 
-      <section className="container-site pb-16 sm:pb-24">
+      {settings.showCategories !== false && <section className="container-site pb-16 sm:pb-24">
         <div className="mb-8 flex items-end justify-between">
           <div><p className="section-eyebrow">SHOP BY MOOD</p><h2 className="section-title">از حال‌وهوایت شروع کن</h2></div>
           <p className="hidden max-w-sm text-left text-[11px] leading-6 text-muted sm:block">دسته‌بندی‌هایی که هر کدام یک استایل کامل را می‌سازند.</p>
@@ -132,17 +132,17 @@ export function HomePage() {
             </Link>
           ))}
         </div>
-      </section>
+      </section>}
 
-      {editorialProduct && (
+      {editorialProduct && settings.showEditorial !== false && (
         <section className="bg-[#171717] text-white">
           <div className="container-site grid min-h-[560px] lg:grid-cols-[.8fr_1.2fr]">
             <div className="flex flex-col justify-between py-10 lg:py-14 lg:pl-14">
               <p className="text-[10px] font-bold tracking-[.18em] text-white/48" dir="ltr">THE ELEVEN UNIFORM / 02</p>
               <div className="py-12 lg:py-8">
                 <p className="text-[10px] font-black text-[#c9a96a]">راهنمای استایل</p>
-                <h2 className="mt-4 max-w-md text-3xl leading-[1.35] font-black tracking-[-.04em] sm:text-5xl">کمتر انتخاب کن، بهتر ست کن.</h2>
-                <p className="mt-5 max-w-md text-xs leading-7 text-white/58">یک کمد حساب‌شده با رنگ‌های خنثی و برش‌های درست؛ قطعه‌هایی که از صبح تا شب کنار هم کار می‌کنند.</p>
+                <h2 className="mt-4 max-w-md text-3xl leading-[1.35] font-black tracking-[-.04em] sm:text-5xl">{settings.editorialTitle || "کمتر انتخاب کن، بهتر ست کن."}</h2>
+                <p className="mt-5 max-w-md text-xs leading-7 text-white/58">{settings.editorialText || "یک کمد حساب‌شده با رنگ‌های خنثی و برش‌های درست؛ قطعه‌هایی که از صبح تا شب کنار هم کار می‌کنند."}</p>
                 <Link to="/product/$slug" params={{ slug: editorialProduct.slug }} className="mt-7 inline-flex h-11 items-center gap-3 border border-white/35 px-5 text-xs font-bold transition hover:bg-white hover:text-ink">دیدن این انتخاب <ArrowLeft className="size-4" /></Link>
               </div>
               <p className="text-[10px] text-white/38">ELEVEN STYLE — QOM / IRAN</p>
@@ -158,13 +158,13 @@ export function HomePage() {
         </section>
       )}
 
-      <section className="container-site py-16 sm:py-24">
+      {settings.showBestSellers !== false && <section className="container-site py-16 sm:py-24">
         <div className="mb-8 flex items-end justify-between gap-4">
           <div><p className="section-eyebrow">BEST SELLERS</p><h2 className="section-title">انتخاب‌های امتحان‌پس‌داده</h2></div>
           <Link to="/shop" search={{ q: "", category: "", sort: "popular" }} className="flex shrink-0 items-center gap-2 text-xs font-bold hover:text-brand">همه پرفروش‌ها <ArrowLeft className="size-4" /></Link>
         </div>
         <ProductGrid products={bestSellers} />
-      </section>
+      </section>}
 
       <section className="border-y border-border bg-[#f6f5f1]">
         <div className="container-site grid grid-cols-2 gap-y-9 py-11 lg:grid-cols-4 lg:py-14">
