@@ -4,26 +4,9 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Field";
 import { productPlaceholderUrl } from "@/lib/assets";
+import { compressImageFile } from "@/lib/image";
 
 const MAX_IMAGES = 8;
-const MAX_FILE_SIZE = 8 * 1024 * 1024;
-
-async function compressImage(file: File) {
-  if (!file.type.startsWith("image/")) throw new Error("فقط فایل تصویری مجاز است");
-  if (file.size > MAX_FILE_SIZE) throw new Error("حجم هر تصویر باید کمتر از ۸ مگابایت باشد");
-
-  const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
-  const width = Math.max(1, Math.round(bitmap.width * scale));
-  const height = Math.max(1, Math.round(bitmap.height * scale));
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  canvas.getContext("2d")?.drawImage(bitmap, 0, 0, width, height);
-  bitmap.close();
-  return canvas.toDataURL("image/webp", 0.82);
-}
-
 export function ProductImageManager({ images, onChange }: { images: string[]; onChange: (images: string[]) => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [url, setUrl] = useState("");
@@ -36,7 +19,7 @@ export function ProductImageManager({ images, onChange }: { images: string[]; on
     setBusy(true);
     try {
       const selected = Array.from(files).slice(0, available);
-      const compressed = await Promise.all(selected.map(compressImage));
+      const compressed = await Promise.all(selected.map((file) => compressImageFile(file)));
       onChange([...images, ...compressed]);
       toast.success(`${compressed.length} تصویر آپلود و بهینه شد`);
     } catch (error) {

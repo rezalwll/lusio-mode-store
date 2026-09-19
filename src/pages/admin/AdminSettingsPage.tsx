@@ -4,6 +4,7 @@ import { useRef, type ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { BannerImageField } from "@/components/admin/BannerImageField";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/Field";
 import { useStore, type StoreBackup } from "@/store/use-store";
@@ -29,6 +30,12 @@ const settingsSchema = z.object({
   showCategories: z.boolean(),
   showEditorial: z.boolean(),
   showBestSellers: z.boolean(),
+  showSaleProducts: z.boolean(),
+  showFestival: z.boolean(),
+  festivalEyebrow: z.string().min(3, "برچسب جشنواره کوتاه است"),
+  festivalTitle: z.string().min(5, "عنوان جشنواره کوتاه است"),
+  festivalSubtitle: z.string().min(10, "توضیح جشنواره کوتاه است"),
+  festivalImage: z.string().min(4, "تصویر جشنواره لازم است"),
   monthlySalesTarget: z.string().regex(/^\d+$/, "عدد معتبر وارد کنید"),
 });
 type SettingsForm = z.infer<typeof settingsSchema>;
@@ -39,7 +46,7 @@ export function AdminSettingsPage() {
   const importBackup = useStore((state) => state.importBackup);
   const resetStore = useStore((state) => state.resetStore);
   const fileRef = useRef<HTMLInputElement>(null);
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<SettingsForm>({
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<SettingsForm>({
     resolver: zodResolver(settingsSchema),
     defaultValues: {
       ...settings,
@@ -54,10 +61,18 @@ export function AdminSettingsPage() {
       showCategories: settings.showCategories ?? true,
       showEditorial: settings.showEditorial ?? true,
       showBestSellers: settings.showBestSellers ?? true,
+      showSaleProducts: settings.showSaleProducts ?? true,
+      showFestival: settings.showFestival ?? true,
+      festivalEyebrow: settings.festivalEyebrow ?? "COLOR FEST / جشنواره رنگ",
+      festivalTitle: settings.festivalTitle ?? "فصل تازه را رنگی شروع کن.",
+      festivalSubtitle: settings.festivalSubtitle ?? "انتخاب‌های محدود جشنواره برای ساختن یک استایل تازه.",
+      festivalImage: settings.festivalImage ?? settings.heroImage,
       monthlySalesTarget: String(settings.monthlySalesTarget ?? 500_000_000),
     },
   });
   const heroImage = watch("heroImage");
+  const heroMobileImage = watch("heroMobileImage");
+  const festivalImage = watch("festivalImage");
 
   function submit(values: SettingsForm) { updateSettings({ ...values, shippingCost: Number(values.shippingCost), freeShippingThreshold: Number(values.freeShippingThreshold), monthlySalesTarget: Number(values.monthlySalesTarget) }); toast.success("تنظیمات فروشگاه ذخیره شد"); }
   function exportData() {
@@ -78,7 +93,38 @@ export function AdminSettingsPage() {
     <div className="mx-auto max-w-[1200px] space-y-6"><div><p className="text-[10px] font-bold text-brand">کنترل کامل فروشگاه</p><h1 className="mt-1 text-2xl font-black">تنظیمات و محتوا</h1><p className="mt-1.5 text-[10px] text-muted">محتوای صفحه اصلی، اطلاعات تماس، ارسال و داده‌های فروشگاه را مدیریت کنید.</p></div>
       <form onSubmit={handleSubmit(submit)} className="space-y-5">
         <section className="rounded-2xl border border-black/5 bg-white p-5 sm:p-6"><div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-xl bg-blue-50 text-blue-700"><Settings2 className="size-5" /></span><div><h2 className="text-xs font-black">اطلاعات عمومی</h2><p className="mt-1 text-[9px] text-muted">نام، اطلاع‌رسانی و راه‌های ارتباطی</p></div></div><div className="mt-6 grid gap-4 sm:grid-cols-2"><Field label="نام فروشگاه" error={errors.storeName?.message}><Input {...register("storeName")} /></Field><Field label="شماره پشتیبانی" error={errors.supportPhone?.message}><Input {...register("supportPhone")} dir="ltr" /></Field><Field label="متن نوار بالای سایت" error={errors.announcement?.message} className="sm:col-span-2"><Input {...register("announcement")} /></Field><Field label="نشانی فروشگاه" error={errors.address?.message} className="sm:col-span-2"><Textarea {...register("address")} rows={3} /></Field><Field label="نام کاربری اینستاگرام" error={errors.instagram?.message}><Input {...register("instagram")} dir="ltr" /></Field></div></section>
-        <section className="rounded-2xl border border-black/5 bg-white p-5 sm:p-6"><div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-xl bg-rose-50 text-brand"><Image className="size-5" /></span><div><h2 className="text-xs font-black">محتوای صفحه اصلی</h2><p className="mt-1 text-[9px] text-muted">همه متن‌ها، تصاویر و بخش‌های ویترین فروشگاه</p></div></div><div className="mt-6 grid gap-4 sm:grid-cols-2"><Field label="برچسب بالای عنوان" error={errors.heroEyebrow?.message}><Input {...register("heroEyebrow")} /></Field><Field label="متن دکمه اصلی" error={errors.heroPrimaryCta?.message}><Input {...register("heroPrimaryCta")} /></Field><Field label="عنوان اصلی" error={errors.heroTitle?.message} className="sm:col-span-2"><Input {...register("heroTitle")} /></Field><Field label="توضیح زیر عنوان" error={errors.heroSubtitle?.message} className="sm:col-span-2"><Textarea {...register("heroSubtitle")} rows={3} /></Field><Field label="عنوان داستان فصل" error={errors.storyTitle?.message} className="sm:col-span-2"><Input {...register("storyTitle")} /></Field><Field label="عنوان راهنمای استایل" error={errors.editorialTitle?.message}><Input {...register("editorialTitle")} /></Field><Field label="متن راهنمای استایل" error={errors.editorialText?.message}><Textarea {...register("editorialText")} rows={3} /></Field><Field label="تصویر دسکتاپ" error={errors.heroImage?.message}><Input {...register("heroImage")} dir="ltr" /></Field><Field label="تصویر موبایل" error={errors.heroMobileImage?.message}><Input {...register("heroMobileImage")} dir="ltr" /></Field><div className="grid gap-2 sm:col-span-2 sm:grid-cols-2 lg:grid-cols-4">{[["showNewArrivals", "تازه‌رسیده‌ها"], ["showCategories", "دسته‌بندی تصویری"], ["showEditorial", "راهنمای استایل"], ["showBestSellers", "پرفروش‌ها"]].map(([name, label]) => <label key={name} className="flex items-center justify-between rounded-xl border border-border p-3 text-[9px] font-bold">{label}<input type="checkbox" {...register(name as "showNewArrivals" | "showCategories" | "showEditorial" | "showBestSellers")} className="size-4 accent-ink" /></label>)}</div>{heroImage && <div className="sm:col-span-2"><p className="mb-2 text-[9px] font-bold">پیش‌نمایش تصویر اصلی</p><img src={heroImage} alt="پیش‌نمایش بنر" className="max-h-64 w-full rounded-xl object-cover" /></div>}</div></section>
+        <section className="rounded-2xl border border-black/5 bg-white p-5 sm:p-6">
+          <div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-xl bg-rose-50 text-brand"><Image className="size-5" /></span><div><h2 className="text-xs font-black">محتوای صفحه اصلی</h2><p className="mt-1 text-[9px] text-muted">متن‌ها، بنرها و بخش‌های ویترین فروشگاه</p></div></div>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <Field label="برچسب بالای عنوان" error={errors.heroEyebrow?.message}><Input {...register("heroEyebrow")} /></Field>
+            <Field label="متن دکمه اصلی" error={errors.heroPrimaryCta?.message}><Input {...register("heroPrimaryCta")} /></Field>
+            <Field label="عنوان اصلی" error={errors.heroTitle?.message} className="sm:col-span-2"><Input {...register("heroTitle")} /></Field>
+            <Field label="توضیح زیر عنوان" error={errors.heroSubtitle?.message} className="sm:col-span-2"><Textarea {...register("heroSubtitle")} rows={3} /></Field>
+            <Field label="عنوان داستان فصل" error={errors.storyTitle?.message} className="sm:col-span-2"><Input {...register("storyTitle")} /></Field>
+            <div className="sm:col-span-2"><input type="hidden" {...register("heroImage")} /><BannerImageField label="بنر اصلی دسکتاپ" value={heroImage} onChange={(value) => setValue("heroImage", value, { shouldDirty: true, shouldValidate: true })} error={errors.heroImage?.message} /></div>
+            <div className="sm:col-span-2"><input type="hidden" {...register("heroMobileImage")} /><BannerImageField label="بنر اصلی موبایل" value={heroMobileImage} onChange={(value) => setValue("heroMobileImage", value, { shouldDirty: true, shouldValidate: true })} error={errors.heroMobileImage?.message} mobile /></div>
+          </div>
+          <div className="mt-7 border-t border-border pt-6">
+            <h3 className="text-[11px] font-black">محتوای جشنواره</h3>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <Field label="برچسب جشنواره" error={errors.festivalEyebrow?.message}><Input {...register("festivalEyebrow")} /></Field>
+              <Field label="عنوان جشنواره" error={errors.festivalTitle?.message}><Input {...register("festivalTitle")} /></Field>
+              <Field label="توضیح جشنواره" error={errors.festivalSubtitle?.message} className="sm:col-span-2"><Textarea {...register("festivalSubtitle")} rows={3} /></Field>
+              <div className="sm:col-span-2"><input type="hidden" {...register("festivalImage")} /><BannerImageField label="تصویر جشنواره" value={festivalImage} onChange={(value) => setValue("festivalImage", value, { shouldDirty: true, shouldValidate: true })} error={errors.festivalImage?.message} /></div>
+            </div>
+          </div>
+          <div className="mt-7 border-t border-border pt-6">
+            <h3 className="mb-3 text-[11px] font-black">نمایش بخش‌ها</h3>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              <label className="flex items-center justify-between rounded-xl border border-border p-3 text-[9px] font-bold">تازه‌رسیده‌ها<input type="checkbox" {...register("showNewArrivals")} className="size-4 accent-ink" /></label>
+              <label className="flex items-center justify-between rounded-xl border border-border p-3 text-[9px] font-bold">دسته‌بندی تصویری<input type="checkbox" {...register("showCategories")} className="size-4 accent-ink" /></label>
+              <label className="flex items-center justify-between rounded-xl border border-border p-3 text-[9px] font-bold">تخفیف‌ها<input type="checkbox" {...register("showSaleProducts")} className="size-4 accent-ink" /></label>
+              <label className="flex items-center justify-between rounded-xl border border-border p-3 text-[9px] font-bold">جشنواره<input type="checkbox" {...register("showFestival")} className="size-4 accent-ink" /></label>
+              <label className="flex items-center justify-between rounded-xl border border-border p-3 text-[9px] font-bold">راهنمای استایل<input type="checkbox" {...register("showEditorial")} className="size-4 accent-ink" /></label>
+              <label className="flex items-center justify-between rounded-xl border border-border p-3 text-[9px] font-bold">پرفروش‌ها<input type="checkbox" {...register("showBestSellers")} className="size-4 accent-ink" /></label>
+            </div>
+          </div>
+        </section>
         <section className="rounded-2xl border border-black/5 bg-white p-5 sm:p-6"><div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-xl bg-amber-50 text-amber-700"><Truck className="size-5" /></span><div><h2 className="text-xs font-black">ارسال سفارش‌ها</h2><p className="mt-1 text-[9px] text-muted">هزینه پایه و آستانه ارسال رایگان</p></div></div><div className="mt-6 grid gap-4 sm:grid-cols-2"><Field label="هزینه ارسال (تومان)" error={errors.shippingCost?.message}><Input {...register("shippingCost")} inputMode="numeric" dir="ltr" /></Field><Field label="حداقل خرید برای ارسال رایگان" error={errors.freeShippingThreshold?.message}><Input {...register("freeShippingThreshold")} inputMode="numeric" dir="ltr" /></Field></div></section>
         <section className="rounded-2xl border border-black/5 bg-white p-5 sm:p-6"><div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-xl bg-emerald-50 text-emerald-700"><Banknote className="size-5" /></span><div><h2 className="text-xs font-black">هدف فروش</h2><p className="mt-1 text-[9px] text-muted">هدف ماهانه‌ای که در داشبورد پایش می‌شود</p></div></div><div className="mt-6 max-w-md"><Field label="هدف فروش ماهانه (تومان)" error={errors.monthlySalesTarget?.message}><Input {...register("monthlySalesTarget")} inputMode="numeric" dir="ltr" /></Field></div></section>
         <div className="sticky bottom-4 flex justify-end"><Button type="submit" size="lg" className="shadow-xl"><Save className="size-4" />ذخیره همه تنظیمات</Button></div>
