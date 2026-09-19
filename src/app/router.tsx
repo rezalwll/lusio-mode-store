@@ -1,6 +1,9 @@
 import { Outlet, createRootRoute, createRoute, createRouter } from "@tanstack/react-router";
 import { StoreLayout } from "@/components/layout/StoreLayout";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 import { ComingSoonPage } from "@/pages/ComingSoonPage";
+import { AdminDashboardPage } from "@/pages/admin/AdminDashboardPage";
+import { AdminOrdersPage } from "@/pages/admin/AdminOrdersPage";
 import { HomePage } from "@/pages/store/HomePage";
 import { AccountPage } from "@/pages/store/AccountPage";
 import { CartPage } from "@/pages/store/CartPage";
@@ -86,12 +89,20 @@ function TrackingRouteView() {
 const adminRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "admin",
-  component: () => <ComingSoonPage title="پنل مدیریت مدرن الون" />,
+  component: AdminLayout,
 });
+
+const adminIndexRoute = createRoute({ getParentRoute: () => adminRoute, path: "/", component: AdminDashboardPage });
+const adminOrdersRoute = createRoute({ getParentRoute: () => adminRoute, path: "orders", component: AdminOrdersPage });
+const adminProductsRoute = createRoute({ getParentRoute: () => adminRoute, path: "products", component: () => <ComingSoonPage title="مدیریت محصولات" /> });
+const adminCustomersRoute = createRoute({ getParentRoute: () => adminRoute, path: "customers", component: () => <ComingSoonPage title="مدیریت مشتریان" /> });
+const adminCategoriesRoute = createRoute({ getParentRoute: () => adminRoute, path: "categories", component: () => <ComingSoonPage title="مدیریت دسته‌بندی‌ها" /> });
+const adminCouponsRoute = createRoute({ getParentRoute: () => adminRoute, path: "coupons", component: () => <ComingSoonPage title="کدهای تخفیف" /> });
+const adminSettingsRoute = createRoute({ getParentRoute: () => adminRoute, path: "settings", component: () => <ComingSoonPage title="تنظیمات و محتوا" /> });
 
 const routeTree = rootRoute.addChildren([
   storeRoute.addChildren([homeRoute, shopRoute, categoryRoute, productRoute, cartRoute, checkoutRoute, accountRoute, trackingRoute]),
-  adminRoute,
+  adminRoute.addChildren([adminIndexRoute, adminOrdersRoute, adminProductsRoute, adminCustomersRoute, adminCategoriesRoute, adminCouponsRoute, adminSettingsRoute]),
 ]);
 
 export const router = createRouter({ routeTree, scrollRestoration: true });
