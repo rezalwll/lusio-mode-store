@@ -10,11 +10,12 @@ export function ProductCard({ product }: { product: Product }) {
   const addToCart = useStore((state) => state.addToCart);
 
   function quickAdd(size = product.sizes[0] || "فری‌سایز") {
-    if (product.stock === 0) return;
+    const variant = product.variants?.find((item) => item.size === size && item.stock > 0) ?? product.variants?.find((item) => item.stock > 0);
+    if (product.stock === 0 || (product.variants?.length && !variant)) return;
     addToCart({
       productId: product.id,
-      size,
-      color: product.colors[0] || "پیش‌فرض",
+      size: variant?.size ?? size,
+      color: variant?.color ?? product.colors[0] ?? "پیش‌فرض",
       quantity: 1,
     });
     toast.success("به سبد خرید اضافه شد", { description: product.name });
@@ -68,9 +69,10 @@ export function ProductCard({ product }: { product: Product }) {
           <div className="absolute inset-x-2.5 bottom-2.5 hidden translate-y-3 bg-white/96 p-2 opacity-0 shadow-lg backdrop-blur transition duration-300 group-hover:translate-y-0 group-hover:opacity-100 sm:block">
             <p className="mb-2 text-center text-[9px] font-bold text-muted">افزودن سریع · انتخاب سایز</p>
             <div className="flex flex-wrap justify-center gap-1">
-              {product.sizes.slice(0, 6).map((size) => (
-                <button key={size} type="button" onClick={() => quickAdd(size)} className="min-w-8 border border-border px-2 py-1.5 text-[9px] font-black transition hover:border-ink hover:bg-ink hover:text-white">{size}</button>
-              ))}
+              {product.sizes.slice(0, 6).map((size) => {
+                const unavailable = Boolean(product.variants?.length) && !product.variants?.some((item) => item.size === size && item.stock > 0);
+                return <button key={size} type="button" disabled={unavailable} onClick={() => quickAdd(size)} className="min-w-8 border border-border px-2 py-1.5 text-[9px] font-black transition hover:border-ink hover:bg-ink hover:text-white disabled:cursor-not-allowed disabled:opacity-25">{size}</button>;
+              })}
             </div>
           </div>
         )}

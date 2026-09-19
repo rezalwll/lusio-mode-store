@@ -16,6 +16,18 @@ export interface Product {
   active: boolean;
   featured: boolean;
   description: string;
+  status?: "published" | "draft" | "archived";
+  metaTitle?: string;
+  metaDescription?: string;
+  variants?: ProductVariant[];
+}
+
+export interface ProductVariant {
+  id: string;
+  sku: string;
+  size: string;
+  color: string;
+  stock: number;
 }
 
 export interface Category {

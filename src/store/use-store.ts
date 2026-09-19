@@ -290,8 +290,14 @@ export const useStore = create<StoreState>()(
             ? state.customers.map((item) => (item.id === customer.id ? nextCustomer : item))
             : [nextCustomer, ...state.customers],
           products: state.products.map((product) => {
-            const line = state.cart.find((item) => item.productId === product.id);
-            return line ? { ...product, stock: Math.max(0, product.stock - line.quantity) } : product;
+            const lines = state.cart.filter((item) => item.productId === product.id);
+            if (!lines.length) return product;
+            const sold = lines.reduce((sum, line) => sum + line.quantity, 0);
+            const variants = product.variants?.map((variant) => {
+              const line = lines.find((item) => item.size === variant.size && item.color === variant.color);
+              return line ? { ...variant, stock: Math.max(0, variant.stock - line.quantity) } : variant;
+            });
+            return { ...product, stock: Math.max(0, product.stock - sold), variants };
           }),
           cart: [],
           appliedCoupon: "",
