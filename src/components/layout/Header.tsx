@@ -40,9 +40,9 @@ export function Header() {
 
   return (
     <>
-      <div className="bg-brand px-4 py-2 text-center text-[10px] font-medium text-white sm:text-[11px]">
+      {settings.announcementEnabled !== false && <div className="bg-brand px-4 py-2 text-center text-[10px] font-medium text-white sm:text-[11px]">
         <span className="inline-flex items-center gap-2"><Sparkles className="size-3 text-[#f2d9c9]" />{settings.announcement}</span>
-      </div>
+      </div>}
       <header className="sticky top-0 z-40 border-b border-[#eadfd8] bg-[#fffdfb]/95 backdrop-blur-xl">
         <div className="container-site relative flex h-18 items-center gap-4 xl:h-21">
           <button

@@ -1,5 +1,5 @@
 import { Link, Outlet, useNavigate } from "@tanstack/react-router";
-import { Bell, Boxes, ChartNoAxesCombined, ChevronLeft, LayoutDashboard, LogOut, Menu, Package, Percent, Search, Settings, ShoppingCart, Store, Tags, Users, X } from "lucide-react";
+import { Bell, ChevronLeft, LayoutDashboard, LogOut, Menu, Package, Palette, Percent, Search, Settings, ShoppingCart, Store, Tags, Users, X } from "lucide-react";
 import { useState } from "react";
 import { logoUrl } from "@/lib/assets";
 import { cn } from "@/lib/utils";
@@ -13,6 +13,7 @@ const navigation = [
   { label: "مشتریان", to: "/admin/customers", icon: Users, exact: false },
   { label: "دسته‌بندی‌ها", to: "/admin/categories", icon: Tags, exact: false },
   { label: "کدهای تخفیف", to: "/admin/coupons", icon: Percent, exact: false },
+  { label: "ظاهر و محتوا", to: "/admin/appearance", icon: Palette, exact: false },
   { label: "تنظیمات و محتوا", to: "/admin/settings", icon: Settings, exact: false },
 ] as const;
 
@@ -32,10 +33,11 @@ export function AdminLayout() {
   const authenticated = useStore((state) => state.adminAuthenticated);
   const orders = useStore((state) => state.orders);
   const products = useStore((state) => state.products);
+  const lowStockThreshold = useStore((state) => state.settings.lowStockThreshold ?? 5);
   const [menuOpen, setMenuOpen] = useState(false);
   if (!authenticated) return <AdminLogin />;
   const pendingCount = orders.filter((item) => item.status === "pending").length;
-  const lowStockCount = products.filter((item) => item.active && item.stock <= 5).length;
+  const lowStockCount = products.filter((item) => item.active && item.stock <= lowStockThreshold).length;
 
   return (
     <div className="min-h-screen bg-[#f5f5f2] text-ink lg:grid lg:grid-cols-[252px_1fr]">

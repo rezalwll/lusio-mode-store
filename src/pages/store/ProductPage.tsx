@@ -12,6 +12,7 @@ import { useStore } from "@/store/use-store";
 
 export function ProductPage({ slug }: { slug: string }) {
   const products = useStore((state) => state.products);
+  const settings = useStore((state) => state.settings);
   const addToCart = useStore((state) => state.addToCart);
   const product = products.find((item) => item.slug === slug && item.active);
   const initialVariant = product?.variants?.find((item) => item.stock > 0);
@@ -65,7 +66,7 @@ export function ProductPage({ slug }: { slug: string }) {
           <div className="mt-7 grid grid-cols-2 gap-2 border-t border-border pt-6 text-[10px]"><span className="flex items-center gap-2"><Truck className="size-4 text-brand" />ارسال سریع به سراسر ایران</span><span className="flex items-center gap-2"><ShieldCheck className="size-4 text-brand" />تضمین اصالت و کیفیت</span></div>
         </section>
       </div>
-      {related.length > 0 && <section className="mt-18 sm:mt-24"><p className="section-eyebrow">پیشنهاد برای شما</p><h2 className="section-title mb-7">محصولات مشابه</h2><ProductGrid products={related} /></section>}
+      {related.length > 0 && <section className="mt-18 sm:mt-24"><p className="section-eyebrow">{settings.relatedEyebrow || "پیشنهاد برای شما"}</p><h2 className="section-title mb-7">{settings.relatedTitle || "محصولات مشابه"}</h2><ProductGrid products={related} /></section>}
     </div>
   );
 }

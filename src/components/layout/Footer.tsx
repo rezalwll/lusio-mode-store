@@ -16,7 +16,7 @@ export function Footer() {
             onError={(event) => { event.currentTarget.src = logoFallbackUrl; }}
           />
           <p className="mt-5 max-w-sm text-xs leading-7 text-white/55">
-            در الون استایل، لباس فقط یک انتخاب نیست؛ بخشی از اعتمادبه‌نفس و سبک زندگی شماست. مجموعه‌ای منتخب از پوشاک مردانه با طراحی روز و کیفیت ماندگار.
+            {settings.footerDescription || "در الون استایل، لباس فقط یک انتخاب نیست؛ بخشی از اعتمادبه‌نفس و سبک زندگی شماست."}
           </p>
         </div>
         <div>
@@ -52,8 +52,8 @@ export function Footer() {
       </div>
       <div className="border-t border-white/8">
         <div className="container-site flex flex-col gap-2 py-5 text-center text-[10px] text-white/40 sm:flex-row sm:justify-between sm:text-right">
-          <span>© ۱۴۰۵ الون استایل؛ تمامی حقوق محفوظ است.</span>
-          <span>تجربه‌ای مدرن برای خرید پوشاک مردانه</span>
+          <span>{settings.footerCopyright || "© ۱۴۰۵ الون استایل؛ تمامی حقوق محفوظ است."}</span>
+          <span>{settings.footerTagline || "تجربه‌ای مدرن برای خرید پوشاک مردانه"}</span>
         </div>
       </div>
     </footer>
