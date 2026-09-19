@@ -3,16 +3,23 @@
 
 @theme {
   --font-sans: "Vazirmatn", Tahoma, Arial, sans-serif;
-  --color-brand: #d3213a;
-  --color-brand-dark: #b5172d;
-  --color-ink: #151515;
-  --color-muted: #83837f;
-  --color-border: #e9e9e5;
+  --color-brand: #8f4d59;
+  --color-brand-dark: #6c3640;
+  --color-ink: #2c2825;
+  --color-muted: #8e8179;
+  --color-border: #e8d9cf;
+  --color-canvas: #fbf7f3;
+  --color-sand: #d7c3b5;
+  --color-clay: #c89478;
+  --color-mint: #b6dfd8;
+  --color-blush: #e8c7d7;
+  --color-lilac: #d9c9e6;
+  --color-sage: #bec8b8;
 }
 
 :root {
-  color: #151515;
-  background: #fff;
+  color: #2c2825;
+  background: #fffdfb;
   font-family: var(--font-sans);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -20,11 +27,11 @@
 
 * { box-sizing: border-box; }
 html { direction: rtl; scroll-behavior: smooth; }
-body { margin: 0; min-width: 320px; min-height: 100vh; overflow-x: hidden; }
+body { margin: 0; min-width: 320px; min-height: 100vh; overflow-x: hidden; background: #fffdfb; }
 button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
 img { max-width: 100%; }
-::selection { color: #fff; background: #d3213a; }
+::selection { color: #fff; background: #8f4d59; }
 
 .container-site {
   width: min(100% - 28px, 1480px);
@@ -39,7 +46,7 @@ img { max-width: 100%; }
   border-radius: 999px;
   transition: background-color .18s ease, color .18s ease;
 }
-.header-icon-button:hover { color: var(--color-brand); background: #f7f7f5; }
+.header-icon-button:hover { color: var(--color-brand); background: #f5ece7; }
 .header-icon-button svg { width: 20px; height: 20px; stroke-width: 1.75; }
 
 .section-eyebrow {

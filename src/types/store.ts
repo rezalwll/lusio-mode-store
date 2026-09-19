@@ -113,5 +113,11 @@ export interface StoreSettings {
   showCategories?: boolean;
   showEditorial?: boolean;
   showBestSellers?: boolean;
+  showSaleProducts?: boolean;
+  showFestival?: boolean;
+  festivalEyebrow?: string;
+  festivalTitle?: string;
+  festivalSubtitle?: string;
+  festivalImage?: string;
   monthlySalesTarget?: number;
 }

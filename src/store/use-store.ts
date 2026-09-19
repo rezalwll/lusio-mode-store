@@ -143,6 +143,12 @@ const initialSettings: StoreSettings = {
   showCategories: true,
   showEditorial: true,
   showBestSellers: true,
+  showSaleProducts: true,
+  showFestival: true,
+  festivalEyebrow: "COLOR FEST / جشنواره رنگ",
+  festivalTitle: "فصل تازه را رنگی شروع کن.",
+  festivalSubtitle: "انتخاب‌های محدود جشنواره با رنگ‌های گرم، خنثی و پاستلی برای ساختن یک استایل تازه.",
+  festivalImage: "https://elevenstyle.ir/wp-content/uploads/2026/09/Shirt.webp",
   monthlySalesTarget: 500_000_000,
 };
 

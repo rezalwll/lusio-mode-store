@@ -23,7 +23,7 @@ export function ProductCard({ product }: { product: Product }) {
 
   return (
     <article className="group min-w-0">
-      <div className="relative aspect-[3/4] overflow-hidden bg-stone-100">
+      <div className="relative aspect-[3/4] overflow-hidden bg-[#f1e8e2]">
         <Link to="/product/$slug" params={{ slug: product.slug }} className="block size-full">
           <img
             src={product.images[0] || productPlaceholderUrl}

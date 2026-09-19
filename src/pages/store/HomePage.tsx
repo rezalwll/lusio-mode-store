@@ -2,7 +2,9 @@ import { Link } from "@tanstack/react-router";
 import {
   ArrowLeft,
   ArrowUpLeft,
+  BadgePercent,
   Headphones,
+  Palette,
   RefreshCw,
   ShieldCheck,
   Sparkles,
@@ -27,6 +29,8 @@ const categoryLayout = [
   "sm:col-span-4 sm:row-span-1",
 ];
 
+const categoryTones = ["bg-[#d7c3b5]", "bg-[#b6dfd8]", "bg-[#e8c7d7]", "bg-[#d9c9e6]", "bg-[#bec8b8]", "bg-[#e7c0ad]", "bg-[#c8b8ae]", "bg-[#f0d9e8]"];
+
 function StorefrontCategoryLink({ category, className, children }: { category: StorefrontCategory; className: string; children: ReactNode }) {
   if (category.categorySlug) return <Link to="/category/$slug" params={{ slug: category.categorySlug }} className={className}>{children}</Link>;
   return <Link to="/shop" search={{ q: category.query || "", category: "", sort: "newest" }} className={className}>{children}</Link>;
@@ -42,6 +46,10 @@ export function HomePage() {
     () => [...activeProducts].sort((a, b) => Number(b.featured) - Number(a.featured) || a.stock - b.stock).slice(0, 8),
     [activeProducts],
   );
+  const saleProducts = useMemo(
+    () => activeProducts.filter((item) => item.regularPrice > item.price).sort((a, b) => (b.regularPrice - b.price) - (a.regularPrice - a.price)).slice(0, 8),
+    [activeProducts],
+  );
   const homeCategories = useMemo(() => storefrontCategories.map((category) => {
     const matchingProducts = activeProducts.filter((product) => matchesStorefrontCategory(product, category));
     const fallbackCategory = categories.find((item) => item.slug === category.fallbackSlug);
@@ -49,10 +57,11 @@ export function HomePage() {
   }), [activeProducts, categories]);
   const spotlight = newArrivals[0];
   const editorialProduct = newArrivals.find((item) => item.category === "men-shirt") ?? newArrivals[4];
+  const festivalProduct = bestSellers[1] ?? newArrivals[1];
 
   return (
     <>
-      <section className="bg-[#efede7]">
+      <section className="bg-canvas">
         <div className="container-site grid min-h-[660px] gap-px bg-white/70 lg:grid-cols-[minmax(0,1.45fr)_minmax(310px,.55fr)]">
           <div className="relative min-h-[540px] overflow-hidden bg-ink lg:min-h-[660px]">
             <picture className="absolute inset-0">
@@ -76,7 +85,7 @@ export function HomePage() {
           </div>
 
           <div className="grid min-h-[420px] grid-rows-[.78fr_1.22fr] gap-px bg-white/70">
-            <div className="flex flex-col justify-between bg-[#ded9cf] p-7 sm:p-9">
+            <div className="flex flex-col justify-between bg-sand p-7 sm:p-9">
               <div className="flex items-start justify-between text-[10px] font-bold text-black/45"><span>داستان این فصل</span><span dir="ltr">01—26</span></div>
               <div>
                 <p className="max-w-[15rem] text-2xl leading-[1.45] font-black tracking-[-.03em] sm:text-3xl">{settings.storyTitle || "لباس‌هایی برای هر روز؛ جزئیاتی برای متفاوت‌بودن."}</p>
@@ -96,10 +105,10 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="border-b border-border bg-white">
+      <section className="border-b border-border bg-[#fffdfb]">
         <div className="container-site flex gap-2 overflow-x-auto py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {homeCategories.map((category) => (
-            <StorefrontCategoryLink key={category.label} category={category} className="flex shrink-0 items-center gap-2 border border-border bg-white px-4 py-2.5 text-[11px] font-bold transition hover:border-ink hover:bg-ink hover:text-white">
+          {homeCategories.map((category, index) => (
+            <StorefrontCategoryLink key={category.label} category={category} className={`flex shrink-0 items-center gap-2 border border-black/5 px-4 py-2.5 text-[11px] font-bold text-ink transition hover:-translate-y-0.5 hover:border-ink ${categoryTones[index]}`}>
               {category.label}
               <span className="text-[9px] opacity-55">{toFa(category.count)}</span>
             </StorefrontCategoryLink>
@@ -114,6 +123,16 @@ export function HomePage() {
         </div>
         <div className="grid grid-cols-2 gap-x-3 gap-y-8 sm:grid-cols-3 lg:grid-cols-4 xl:gap-x-5">
           {newArrivals.slice(0, 4).map((product) => <ProductCard key={product.id} product={product} />)}
+        </div>
+      </section>}
+
+      {settings.showSaleProducts !== false && saleProducts.length > 0 && <section className="bg-[#f7e9e5]">
+        <div className="container-site py-16 sm:py-24">
+          <div className="mb-8 flex items-end justify-between gap-4">
+            <div><p className="section-eyebrow flex items-center gap-1.5"><BadgePercent className="size-3.5" /> SALE / تخفیف‌های فعال</p><h2 className="section-title">انتخاب‌های خوش‌قیمت این هفته</h2></div>
+            <Link to="/shop" search={{ q: "", category: "", sort: "sale" }} className="flex shrink-0 items-center gap-2 text-xs font-bold hover:text-brand">همه تخفیف‌ها <ArrowLeft className="size-4" /></Link>
+          </div>
+          <div className="grid grid-cols-2 gap-x-3 gap-y-8 sm:grid-cols-3 lg:grid-cols-4 xl:gap-x-5">{saleProducts.slice(0, 4).map((product) => <ProductCard key={product.id} product={product} />)}</div>
         </div>
       </section>}
 
@@ -133,6 +152,26 @@ export function HomePage() {
               </div>
             </StorefrontCategoryLink>
           ))}
+        </div>
+      </section>}
+
+      {settings.showFestival !== false && festivalProduct && <section className="container-site pb-16 sm:pb-24">
+        <div className="grid min-h-[520px] overflow-hidden border border-black/5 bg-[#f1e7df] lg:grid-cols-[.8fr_1.2fr]">
+          <div className="flex flex-col justify-between bg-mint p-7 sm:p-10 lg:p-14">
+            <div className="flex items-center justify-between text-[9px] font-black text-black/45"><span>{settings.festivalEyebrow || "COLOR FEST / جشنواره رنگ"}</span><Palette className="size-5" /></div>
+            <div className="py-12">
+              <h2 className="max-w-md text-3xl leading-[1.3] font-black tracking-[-.04em] sm:text-5xl">{settings.festivalTitle || "فصل تازه را رنگی شروع کن."}</h2>
+              <p className="mt-5 max-w-md text-xs leading-7 text-black/60">{settings.festivalSubtitle || "انتخاب‌های محدود جشنواره برای ساختن یک استایل تازه."}</p>
+              <Link to="/shop" search={{ q: "", category: "", sort: saleProducts.length ? "sale" : "popular" }} className="mt-7 inline-flex h-11 items-center gap-3 bg-ink px-5 text-xs font-black text-white transition hover:bg-brand">ورود به جشنواره <ArrowLeft className="size-4" /></Link>
+            </div>
+            <div className="grid h-8 grid-cols-4"><span className="bg-clay" /><span className="bg-blush" /><span className="bg-lilac" /><span className="bg-sage" /></div>
+          </div>
+          <div className="relative min-h-[420px] bg-clay">
+            <img src={settings.festivalImage || festivalProduct.images[0] || productPlaceholderUrl} alt="جشنواره رنگ الون" className="size-full object-cover" />
+            <Link to="/product/$slug" params={{ slug: festivalProduct.slug }} className="absolute bottom-5 left-5 right-5 flex items-center justify-between bg-[#fffdfb] p-4 text-ink sm:bottom-7 sm:left-7 sm:right-auto sm:w-[330px]">
+              <div><p className="text-[9px] text-muted">پیشنهاد جشنواره</p><strong className="mt-1 block text-xs">{festivalProduct.name}</strong></div><ArrowUpLeft className="size-5" />
+            </Link>
+          </div>
         </div>
       </section>}
 

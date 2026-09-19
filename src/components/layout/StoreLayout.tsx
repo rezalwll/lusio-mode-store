@@ -5,7 +5,7 @@ import { MiniCart } from "./MiniCart";
 
 export function StoreLayout() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#fffdfb]">
       <Header />
       <main><Outlet /></main>
       <Footer />

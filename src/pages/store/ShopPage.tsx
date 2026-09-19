@@ -29,10 +29,12 @@ export function ShopPage({ initialQuery = "", initialCategory = "", initialSort 
       .filter((product) => !term || `${product.name} ${product.categoryName}`.toLocaleLowerCase("fa").includes(term))
       .filter((product) => !(lockedCategory || category) || product.category === (lockedCategory || category) || product.categorySlugs.includes(lockedCategory || category))
       .filter((product) => !onlyAvailable || product.stock > 0)
+      .filter((product) => sort !== "sale" || product.regularPrice > product.price)
       .sort((a, b) => {
         if (sort === "price-low") return a.price - b.price;
         if (sort === "price-high") return b.price - a.price;
         if (sort === "popular") return Number(b.featured) - Number(a.featured);
+        if (sort === "sale") return (b.regularPrice - b.price) - (a.regularPrice - a.price);
         return b.id - a.id;
       });
   }, [products, query, category, lockedCategory, onlyAvailable, sort]);
@@ -73,7 +75,7 @@ export function ShopPage({ initialQuery = "", initialCategory = "", initialSort 
       <div className="mt-8 flex items-center justify-between border-y border-border py-3 lg:justify-end">
         <button type="button" onClick={() => setFiltersOpen(true)} className="flex items-center gap-2 text-xs font-bold lg:hidden"><Filter className="size-4" /> فیلترها</button>
         <select value={sort} onChange={(event) => setSort(event.target.value)} className="h-10 rounded-xl border border-border bg-white px-3 text-[11px] font-bold outline-none">
-          <option value="newest">جدیدترین</option><option value="popular">محبوب‌ترین</option><option value="price-low">ارزان‌ترین</option><option value="price-high">گران‌ترین</option>
+          <option value="newest">جدیدترین</option><option value="popular">محبوب‌ترین</option><option value="sale">تخفیف‌دارها</option><option value="price-low">ارزان‌ترین</option><option value="price-high">گران‌ترین</option>
         </select>
       </div>
 
