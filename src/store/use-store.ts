@@ -223,12 +223,16 @@ export const useStore = create<StoreState>()(
         set((state) => {
           const key = lineKey(line);
           const exists = state.cart.find((item) => lineKey(item) === key);
+          const product = state.products.find((item) => item.id === line.productId);
+          const variant = product?.variants?.find((item) => item.size === line.size && item.color === line.color);
+          const available = product?.variants?.length ? (variant?.stock ?? 0) : (product?.stock ?? 0);
+          if (available <= 0) return state;
           return {
             cart: exists
               ? state.cart.map((item) =>
-                  lineKey(item) === key ? { ...item, quantity: item.quantity + line.quantity } : item,
+                  lineKey(item) === key ? { ...item, quantity: Math.min(available, item.quantity + line.quantity) } : item,
                 )
-              : [...state.cart, line],
+              : [...state.cart, { ...line, quantity: Math.min(available, line.quantity) }],
             cartOpen: true,
           };
         });
@@ -236,15 +240,19 @@ export const useStore = create<StoreState>()(
       removeFromCart: (productId, size, color) =>
         set((state) => ({ cart: state.cart.filter((item) => lineKey(item) !== lineKey({ productId, size, color })) })),
       setCartQuantity: (productId, size, color, quantity) =>
-        set((state) => ({
-          cart: state.cart
+        set((state) => {
+          const product = state.products.find((item) => item.id === productId);
+          const variant = product?.variants?.find((item) => item.size === size && item.color === color);
+          const available = product?.variants?.length ? (variant?.stock ?? 0) : (product?.stock ?? 0);
+          return { cart: state.cart
             .map((item) =>
               lineKey(item) === lineKey({ productId, size, color })
-                ? { ...item, quantity: Math.max(0, quantity) }
+                ? { ...item, quantity: Math.min(available, Math.max(0, quantity)) }
                 : item,
             )
             .filter((item) => item.quantity > 0),
-        })),
+          };
+        }),
       clearCart: () => set({ cart: [], appliedCoupon: "" }),
       saveProduct: (product) =>
         set((state) => ({

@@ -13,9 +13,10 @@ export function ProductPage({ slug }: { slug: string }) {
   const products = useStore((state) => state.products);
   const addToCart = useStore((state) => state.addToCart);
   const product = products.find((item) => item.slug === slug && item.active);
+  const initialVariant = product?.variants?.find((item) => item.stock > 0);
   const [image, setImage] = useState(0);
-  const [size, setSize] = useState(product?.sizes[0] || "فری‌سایز");
-  const [color, setColor] = useState(product?.colors[0] || "پیش‌فرض");
+  const [size, setSize] = useState(initialVariant?.size || product?.sizes[0] || "فری‌سایز");
+  const [color, setColor] = useState(initialVariant?.color || product?.colors[0] || "پیش‌فرض");
   const [quantity, setQuantity] = useState(1);
   const related = useMemo(() => product ? products.filter((item) => item.active && item.id !== product.id && item.category === product.category).slice(0, 4) : [], [products, product]);
   const selectedVariant = product?.variants?.find((item) => item.size === size && item.color === color);
