@@ -8,28 +8,29 @@ import {
   Sparkles,
   Truck,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import { ProductCard } from "@/components/product/ProductCard";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { productPlaceholderUrl } from "@/lib/assets";
 import { toFa } from "@/lib/format";
+import { matchesStorefrontCategory, storefrontCategories, type StorefrontCategory } from "@/lib/storefront-categories";
 import { useStore } from "@/store/use-store";
-
-const homeCategorySlugs = [
-  "men-shirt",
-  "men-pants",
-  "men-t-shirts-and-sweatshirts",
-  "men-shoes-and-boots",
-  "men-accessories",
-  "men-set",
-];
 
 const categoryLayout = [
   "sm:col-span-2 sm:row-span-2",
   "sm:col-span-1 sm:row-span-1",
   "sm:col-span-1 sm:row-span-1",
   "sm:col-span-2 sm:row-span-1",
+  "sm:col-span-1 sm:row-span-1",
+  "sm:col-span-1 sm:row-span-1",
+  "sm:col-span-2 sm:row-span-1",
+  "sm:col-span-4 sm:row-span-1",
 ];
+
+function StorefrontCategoryLink({ category, className, children }: { category: StorefrontCategory; className: string; children: ReactNode }) {
+  if (category.categorySlug) return <Link to="/category/$slug" params={{ slug: category.categorySlug }} className={className}>{children}</Link>;
+  return <Link to="/shop" search={{ q: category.query || "", category: "", sort: "newest" }} className={className}>{children}</Link>;
+}
 
 export function HomePage() {
   const products = useStore((state) => state.products);
@@ -41,10 +42,11 @@ export function HomePage() {
     () => [...activeProducts].sort((a, b) => Number(b.featured) - Number(a.featured) || a.stock - b.stock).slice(0, 8),
     [activeProducts],
   );
-  const homeCategories = useMemo(
-    () => homeCategorySlugs.map((slug) => categories.find((item) => item.slug === slug)).filter(Boolean),
-    [categories],
-  );
+  const homeCategories = useMemo(() => storefrontCategories.map((category) => {
+    const matchingProducts = activeProducts.filter((product) => matchesStorefrontCategory(product, category));
+    const fallbackCategory = categories.find((item) => item.slug === category.fallbackSlug);
+    return { ...category, count: matchingProducts.length, image: matchingProducts[0]?.images[0] || fallbackCategory?.image || productPlaceholderUrl };
+  }), [activeProducts, categories]);
   const spotlight = newArrivals[0];
   const editorialProduct = newArrivals.find((item) => item.category === "men-shirt") ?? newArrivals[4];
 
@@ -96,11 +98,11 @@ export function HomePage() {
 
       <section className="border-b border-border bg-white">
         <div className="container-site flex gap-2 overflow-x-auto py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {homeCategories.map((category) => category && (
-            <Link key={category.id} to="/category/$slug" params={{ slug: category.slug }} className="flex shrink-0 items-center gap-2 border border-border bg-white px-4 py-2.5 text-[11px] font-bold transition hover:border-ink hover:bg-ink hover:text-white">
-              {category.name}
-              <span className="text-[9px] opacity-55">{toFa(activeProducts.filter((item) => item.categorySlugs.includes(category.slug) || item.category === category.slug).length)}</span>
-            </Link>
+          {homeCategories.map((category) => (
+            <StorefrontCategoryLink key={category.label} category={category} className="flex shrink-0 items-center gap-2 border border-border bg-white px-4 py-2.5 text-[11px] font-bold transition hover:border-ink hover:bg-ink hover:text-white">
+              {category.label}
+              <span className="text-[9px] opacity-55">{toFa(category.count)}</span>
+            </StorefrontCategoryLink>
           ))}
         </div>
       </section>
@@ -121,15 +123,15 @@ export function HomePage() {
           <p className="hidden max-w-sm text-left text-[11px] leading-6 text-muted sm:block">دسته‌بندی‌هایی که هر کدام یک استایل کامل را می‌سازند.</p>
         </div>
         <div className="grid auto-rows-[230px] grid-cols-2 gap-2 sm:auto-rows-[250px] sm:grid-cols-4 lg:auto-rows-[290px]">
-          {homeCategories.slice(0, 4).map((category, index) => category && (
-            <Link key={category.id} to="/category/$slug" params={{ slug: category.slug }} className={`group relative overflow-hidden bg-stone-100 ${categoryLayout[index]}`}>
-              <img src={category.image} alt={category.name} loading="lazy" className="size-full object-cover transition duration-700 group-hover:scale-[1.035]" />
+          {homeCategories.map((category, index) => (
+            <StorefrontCategoryLink key={category.label} category={category} className={`group relative overflow-hidden bg-stone-100 ${categoryLayout[index]}`}>
+              <img src={category.image} alt={category.label} loading="lazy" className="size-full object-cover transition duration-700 group-hover:scale-[1.035]" />
               <div className="absolute inset-0 bg-black/22 transition group-hover:bg-black/35" />
               <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-5 text-white sm:p-6">
-                <div><p className="text-[9px] text-white/70">{toFa(activeProducts.filter((item) => item.categorySlugs.includes(category.slug) || item.category === category.slug).length)} انتخاب</p><h3 className="mt-1 text-base font-black sm:text-xl">{category.name}</h3></div>
+                <div><p className="text-[9px] text-white/70">{toFa(category.count)} انتخاب</p><h3 className="mt-1 text-base font-black sm:text-xl">{category.label}</h3></div>
                 <ArrowUpLeft className="size-5 shrink-0 transition group-hover:-translate-x-1 group-hover:-translate-y-1" />
               </div>
-            </Link>
+            </StorefrontCategoryLink>
           ))}
         </div>
       </section>}

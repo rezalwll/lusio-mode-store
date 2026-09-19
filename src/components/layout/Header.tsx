@@ -3,20 +3,18 @@ import { ArrowUpLeft, Flame, Heart, Menu, Search, ShoppingBag, Sparkles, UserRou
 import { useMemo, useState, type FormEvent } from "react";
 import { logoFallbackUrl, logoUrl } from "@/lib/assets";
 import { toFa } from "@/lib/format";
+import { storefrontCategories, type StorefrontCategory } from "@/lib/storefront-categories";
 import { useStore } from "@/store/use-store";
 
-const navSlugs = [
-  "men-shirt",
-  "men-pants",
-  "men-t-shirts-and-sweatshirts",
-  "men-shoes-and-boots",
-  "men-accessories",
-  "men-set",
-];
+function CategoryLink({ category, className, onClick }: { category: StorefrontCategory; className: string; onClick?: () => void }) {
+  if (category.categorySlug) {
+    return <Link to="/category/$slug" params={{ slug: category.categorySlug }} className={className} activeProps={{ className: "border-brand text-brand" }} onClick={onClick}>{category.label}</Link>;
+  }
+  return <Link to="/shop" search={{ q: category.query || "", category: "", sort: "newest" }} className={className} onClick={onClick}>{category.label}</Link>;
+}
 
 export function Header() {
   const navigate = useNavigate();
-  const categories = useStore((state) => state.categories);
   const products = useStore((state) => state.products);
   const cart = useStore((state) => state.cart);
   const settings = useStore((state) => state.settings);
@@ -25,10 +23,6 @@ export function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const cartCount = cart.reduce((sum, line) => sum + line.quantity, 0);
-  const navCategories = useMemo(
-    () => navSlugs.map((slug) => categories.find((item) => item.slug === slug)).filter(Boolean),
-    [categories],
-  );
   const searchResults = useMemo(() => {
     const term = query.trim().toLocaleLowerCase("fa");
     if (!term) return products.filter((product) => product.active && product.featured).slice(0, 4);
@@ -50,10 +44,10 @@ export function Header() {
         <span className="inline-flex items-center gap-2"><Sparkles className="size-3 text-[#d8b36b]" />{settings.announcement}</span>
       </div>
       <header className="sticky top-0 z-40 border-b border-black/5 bg-white/95 backdrop-blur-xl">
-        <div className="container-site flex h-18 items-center gap-4 lg:h-21">
+        <div className="container-site relative flex h-18 items-center gap-4 xl:h-21">
           <button
             type="button"
-            className="grid size-10 place-items-center lg:hidden"
+            className="grid size-10 place-items-center xl:hidden"
             onClick={() => setMenuOpen(true)}
             aria-label="باز کردن منو"
           >
@@ -69,22 +63,11 @@ export function Header() {
             />
           </Link>
 
-          <nav className="mr-auto hidden h-full items-center gap-5 xl:gap-7 lg:flex" aria-label="منوی اصلی">
-            <Link to="/shop" search={{ q: "", category: "", sort: "newest" }} className="flex h-full items-center gap-1 whitespace-nowrap border-b-2 border-transparent text-[12px] font-black transition hover:border-ink xl:text-[13px]">تازه‌ها</Link>
-            {navCategories.map((category) => category && (
-              <Link
-                key={category.slug}
-                to="/category/$slug"
-                params={{ slug: category.slug }}
-                className="flex h-full items-center whitespace-nowrap border-b-2 border-transparent text-[12px] font-bold transition hover:border-ink xl:text-[13px]"
-                activeProps={{ className: "border-brand text-brand" }}
-              >
-                {category.name}
-              </Link>
-            ))}
+          <nav className="absolute left-1/2 hidden h-full -translate-x-1/2 items-center justify-center gap-3 xl:flex 2xl:gap-5" aria-label="منوی اصلی">
+            {storefrontCategories.map((category) => <CategoryLink key={category.label} category={category} className="flex h-full items-center whitespace-nowrap border-b-2 border-transparent text-[10px] font-bold transition hover:border-brand hover:text-brand 2xl:text-[11px]" />)}
           </nav>
 
-          <div className="mr-auto flex items-center gap-0.5 lg:mr-2 lg:gap-1">
+          <div className="mr-auto flex items-center gap-0.5 xl:gap-1">
             <button type="button" className="header-icon-button" onClick={() => setSearchOpen(true)} aria-label="جستجو">
               <Search />
             </button>
@@ -121,17 +104,7 @@ export function Header() {
             </button>
           </div>
           <nav className="mt-4 grid" aria-label="منوی موبایل">
-            {navCategories.map((category) => category && (
-              <Link
-                key={category.slug}
-                to="/category/$slug"
-                params={{ slug: category.slug }}
-                className="border-b border-border py-3.5 text-[13px] font-bold"
-                onClick={() => setMenuOpen(false)}
-              >
-                {category.name}
-              </Link>
-            ))}
+            {storefrontCategories.map((category) => <CategoryLink key={category.label} category={category} className="border-b border-border py-3.5 text-[13px] font-bold" onClick={() => setMenuOpen(false)} />)}
             <Link to="/shop" search={{ q: "", category: "", sort: "newest" }} className="flex items-center justify-between border-b border-border py-3.5 text-[13px] font-black" onClick={() => setMenuOpen(false)}>تازه‌رسیده‌ها <Sparkles className="size-4 text-brand" /></Link>
             <Link to="/shop" search={{ q: "", category: "", sort: "popular" }} className="flex items-center justify-between border-b border-border py-3.5 text-[13px] font-black" onClick={() => setMenuOpen(false)}>پرفروش‌ها <Flame className="size-4 text-brand" /></Link>
             <Link to="/shop" search={{ q: "", category: "", sort: "newest" }} className="border-b border-border py-3.5 text-[13px] font-bold" onClick={() => setMenuOpen(false)}>همه محصولات</Link>
