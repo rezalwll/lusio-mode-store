@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ProductGrid } from "@/components/product/ProductGrid";
+import { ProductImageZoom } from "@/components/product/ProductImageZoom";
 import { productPlaceholderUrl } from "@/lib/assets";
 import { formatToman, toFa } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -42,7 +43,7 @@ export function ProductPage({ slug }: { slug: string }) {
               <button key={`${src}-${index}`} type="button" onClick={() => setImage(index)} className={cn("h-24 w-18 shrink-0 overflow-hidden rounded-xl border-2 bg-stone-100 sm:h-26 sm:w-full", image === index ? "border-ink" : "border-transparent")}><img src={src} alt="" className="size-full object-cover" /></button>
             ))}
           </div>
-          <div className="order-1 aspect-[3/4] overflow-hidden rounded-[1.5rem] bg-stone-100 sm:order-2"><img src={product.images[image] || productPlaceholderUrl} alt={product.name} className="size-full object-cover" /></div>
+          <div className="order-1 aspect-[3/4] overflow-hidden rounded-[1.5rem] bg-stone-100 sm:order-2"><ProductImageZoom src={product.images[image] || productPlaceholderUrl} alt={product.name} /></div>
         </section>
 
         <section className="self-center lg:py-8">
