@@ -18,15 +18,14 @@ export default defineConfig({
     screenshot: "only-on-failure",
     video: "off",
   },
-  // Serves the production build: `dist/` contains only the React app, so
-  // extensionless routes (e.g. /cart) always resolve to the SPA fallback.
-  // (Against `vite dev`, repo-root legacy *.html files shadow same-name
-  // routes: /cart would serve legacy cart.html instead of the React page.)
+  // Serves a fresh Next production build: `next start` serves only the App
+  // Router (no legacy *.html shadowing) on a deterministic test port.
+  // Functional E2E must run against `next start`, never `next dev`.
   webServer: {
-    command: "npm run build --silent && npx vite preview --host 127.0.0.1 --port 4173",
+    command: "npm run build --silent && npx next start --hostname 127.0.0.1 --port 4173",
     url: baseURL,
     reuseExistingServer: !process.env.CI,
-    timeout: 180_000,
+    timeout: 300_000,
   },
   projects: [
     {

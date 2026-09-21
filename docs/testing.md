@@ -63,9 +63,8 @@ solve OS rendering differences.
 
 ## E2E determinism notes
 
-- Tests run against `vite preview` of a fresh production build (port 4173),
-  never `vite dev`: repo-root legacy `*.html` files would otherwise shadow
-  same-name SPA routes (e.g. `/cart` serving legacy `cart.html`).
+- Tests run against `next start` of a fresh production build (port 4173),
+  never `next dev`.
 - External requests (catalog imagery, Google Fonts) are blocked in-test: a
   hanging font stylesheet otherwise stalls `DOMContentLoaded` for ~30s per
   navigation. Nothing asserted depends on remote assets.

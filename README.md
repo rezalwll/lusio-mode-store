@@ -5,7 +5,7 @@
 ## فناوری‌ها
 
 - React 19 + TypeScript 6
-- Vite 8 + Tailwind CSS 4
+- Next.js 16 (App Router) + Tailwind CSS 4
 - TanStack Router و TanStack Query
 - Zustand برای وضعیت و داده‌های فروشگاه
 - React Hook Form + Zod برای فرم‌ها

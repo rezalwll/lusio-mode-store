@@ -8,6 +8,7 @@ export default tseslint.config(
   {
     ignores: [
       "dist/**",
+      ".next/**",
       "coverage/**",
       "playwright-report/**",
       "test-results/**",
@@ -53,6 +54,22 @@ export default tseslint.config(
           allowConstantExport: true,
           allowCompoundComponents: true,
           allowExportNames: ["buttonVariants"],
+        },
+      ],
+    },
+  },
+  {
+    // Next.js root layout must export the `metadata` object alongside the
+    // layout component; `allowExportNames` is the plugin's intended narrow
+    // option for framework-required non-component exports.
+    files: ["app/layout.tsx"],
+    rules: {
+      "react-refresh/only-export-components": [
+        "error",
+        {
+          allowConstantExport: true,
+          allowCompoundComponents: true,
+          allowExportNames: ["metadata"],
         },
       ],
     },
