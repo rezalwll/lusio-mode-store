@@ -1,18 +1,8 @@
-"use client";
+import type { Metadata } from "next";
+import { TrackingView } from "./tracking-view";
 
-import { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
-import { TrackingPage } from "@/views/store/TrackingPage";
-
-function TrackingRouteView() {
-  const search = useSearchParams();
-  return <TrackingPage initialCode={search.get("code") ?? ""} />;
-}
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default function TrackingRoutePage() {
-  return (
-    <Suspense>
-      <TrackingRouteView />
-    </Suspense>
-  );
+  return <TrackingView />;
 }
