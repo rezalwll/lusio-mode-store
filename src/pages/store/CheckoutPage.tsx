@@ -7,6 +7,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/Field";
 import { useCartLines } from "@/hooks/use-cart-lines";
+import { calculateDiscount } from "@/lib/cart-pricing";
 import { formatToman } from "@/lib/format";
 import { useStore } from "@/store/use-store";
 
@@ -32,10 +33,7 @@ export function CheckoutPage() {
   const appliedCoupon = useStore((state) => state.appliedCoupon);
   const placeOrder = useStore((state) => state.placeOrder);
   const [orderId, setOrderId] = useState("");
-  const coupon = coupons.find((item) => item.active && item.code.toLowerCase() === appliedCoupon.toLowerCase());
-  const discount = coupon && subtotal >= coupon.minOrder
-    ? Math.min(coupon.type === "percent" ? Math.round(subtotal * coupon.value / 100) : coupon.value, subtotal)
-    : 0;
+  const discount = calculateDiscount(coupons, appliedCoupon, subtotal);
   const shipping = subtotal >= settings.freeShippingThreshold ? 0 : settings.shippingCost;
   const total = Math.max(0, subtotal - discount + shipping);
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<CheckoutForm>({
