@@ -23,29 +23,22 @@ export default tseslint.config(
   eslint.configs.recommended,
   tseslint.configs.recommended,
   reactHooks.configs.flat.recommended,
-  reactRefresh.configs.vite,
+  reactRefresh.configs.next,
   {
     files: ["src/**/*"],
     languageOptions: { globals: globals.browser },
   },
   {
-    files: ["*.config.*", "vite.config.*"],
+    files: ["*.config.*"],
     languageOptions: { globals: { ...globals.browser, ...globals.node } },
   },
   {
     // Narrow Fast Refresh handling (no module rewrites):
-    // - src/app/router.tsx is a TanStack Router route-tree module: one stable
-    //   `router` export plus file-local view components (route cohesion is the
-    //   framework idiom). Splitting it apart purely for the linter is out of
-    //   scope, so the rule warns here instead of erroring — Vite HMR still
-    //   reloads the module.
-    // - src/components/ui/button.tsx pairs the Button component with the
-    //   widely-imported `buttonVariants` (cva) object; `allowExportNames` is
-    //   the plugin's intended narrow option for that pattern.
-    files: ["src/app/router.tsx"],
-    rules: { "react-refresh/only-export-components": "warn" },
-  },
-  {
+    // src/components/ui/button.tsx pairs the Button component with the
+    // widely-imported `buttonVariants` (cva) object; `allowExportNames` is
+    // the plugin's intended narrow option for that pattern. Next framework
+    // exports (metadata, viewport, route-segment options) are already
+    // allowed by the plugin's Next preset above, so no extra override.
     files: ["src/components/ui/button.tsx"],
     rules: {
       "react-refresh/only-export-components": [
@@ -54,22 +47,6 @@ export default tseslint.config(
           allowConstantExport: true,
           allowCompoundComponents: true,
           allowExportNames: ["buttonVariants"],
-        },
-      ],
-    },
-  },
-  {
-    // Next.js root layout must export the `metadata` object alongside the
-    // layout component; `allowExportNames` is the plugin's intended narrow
-    // option for framework-required non-component exports.
-    files: ["app/layout.tsx"],
-    rules: {
-      "react-refresh/only-export-components": [
-        "error",
-        {
-          allowConstantExport: true,
-          allowCompoundComponents: true,
-          allowExportNames: ["metadata"],
         },
       ],
     },

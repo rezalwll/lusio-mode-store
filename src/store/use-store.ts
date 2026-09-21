@@ -425,6 +425,10 @@ export const useStore = create<StoreState>()(
     {
       name: "lusio-mode-store-v2",
       storage: createJSONStorage(() => localStorage),
+      // SSR-safe: never auto-hydrate persisted browser state before the first
+      // client render (server HTML uses default state). Providers rehydrate
+      // explicitly in an effect after mount; see app/providers.tsx.
+      skipHydration: true,
       partialize: (state) => ({
         products: state.products,
         categories: state.categories,
