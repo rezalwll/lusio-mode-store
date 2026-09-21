@@ -4,7 +4,7 @@
 
 ## فناوری‌ها
 
-- React 19 + TypeScript 7
+- React 19 + TypeScript 6
 - Vite 8 + Tailwind CSS 4
 - TanStack Router و TanStack Query
 - Zustand برای وضعیت و داده‌های فروشگاه
