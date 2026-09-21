@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ArrowUpLeft, Flame, Heart, Menu, Search, ShoppingBag, Sparkles, UserRound, X } from "lucide-react";
@@ -66,12 +67,17 @@ export function Header() {
           </button>
 
           <Link href="/" className="shrink-0" aria-label="الون استایل">
-            <img
-              src={logoUrl}
-              alt="ELEVEN"
-              className="h-11 w-30 object-contain sm:w-36 lg:h-14 lg:w-42"
-              onError={(event) => { event.currentTarget.src = logoFallbackUrl; }}
-            />
+            <span className="relative block h-11 w-30 sm:w-36 lg:h-14 lg:w-42">
+              <Image
+                src={logoUrl}
+                alt="ELEVEN"
+                fill
+                sizes="(min-width: 1024px) 168px, (min-width: 640px) 144px, 120px"
+                className="object-contain"
+                priority
+                onError={(event) => { event.currentTarget.src = logoFallbackUrl; }}
+              />
+            </span>
           </Link>
 
           <nav className="absolute left-1/2 hidden h-full -translate-x-1/2 items-center justify-center gap-3 xl:flex 2xl:gap-5" aria-label="منوی اصلی">
@@ -109,7 +115,9 @@ export function Header() {
           onClick={(event) => event.stopPropagation()}
         >
           <div className="flex items-center justify-between border-b border-border pb-4">
-            <img src={logoUrl} alt="ELEVEN" className="h-11 w-32 object-contain" />
+            <span className="relative block h-11 w-32">
+              <Image src={logoUrl} alt="ELEVEN" fill sizes="128px" className="object-contain" />
+            </span>
             <button type="button" className="grid size-9 place-items-center rounded-full bg-stone-100" onClick={() => setMenuOpen(false)} aria-label="بستن منو">
               <X className="size-5" />
             </button>

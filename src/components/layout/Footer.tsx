@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { Instagram, MapPin, Phone, Send } from "lucide-react";
 import { logoFallbackUrl, logoUrl } from "@/lib/assets";
@@ -11,12 +12,16 @@ export function Footer() {
     <footer className="mt-20 bg-ink text-white">
       <div className="container-site grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-[1.25fr_.7fr_.7fr_1fr] lg:py-16">
         <div>
-          <img
-            src={logoUrl}
-            alt="ELEVEN"
-            className="h-14 w-40 brightness-0 invert"
-            onError={(event) => { event.currentTarget.src = logoFallbackUrl; }}
-          />
+          <span className="relative block h-14 w-40">
+            <Image
+              src={logoUrl}
+              alt="ELEVEN"
+              fill
+              sizes="160px"
+              className="object-contain brightness-0 invert"
+              onError={(event) => { event.currentTarget.src = logoFallbackUrl; }}
+            />
+          </span>
           <p className="mt-5 max-w-sm text-xs leading-7 text-white/55">
             {settings.footerDescription || "در الون استایل، لباس فقط یک انتخاب نیست؛ بخشی از اعتمادبه‌نفس و سبک زندگی شماست."}
           </p>

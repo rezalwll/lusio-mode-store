@@ -65,6 +65,7 @@ solve OS rendering differences.
 
 - Tests run against `next start` of a fresh production build (port 4173),
   never `next dev`.
-- External requests (catalog imagery, Google Fonts) are blocked in-test: a
-  hanging font stylesheet otherwise stalls `DOMContentLoaded` for ~30s per
-  navigation. Nothing asserted depends on remote assets.
+- External catalog imagery requests are blocked in-test: hanging remote
+  requests otherwise stall page load and inflate memory. Nothing asserted
+  depends on remote assets (webfonts are self-hosted since Phase 5, so no
+  font blocking is needed).
