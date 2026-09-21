@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Button } from "@/components/ui/button";
 import { orderStatusLabels } from "@/lib/admin";
-import { formatNumber, formatToman, toFa } from "@/lib/format";
+import { formatToman, toFa } from "@/lib/format";
 import { useStore } from "@/store/use-store";
 import type { OrderStatus } from "@/types/store";
 
