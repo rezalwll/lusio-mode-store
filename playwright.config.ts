@@ -7,7 +7,7 @@ export default defineConfig({
   timeout: 60_000,
   expect: { timeout: 10_000 },
   fullyParallel: true,
-  workers: 2,
+  workers: process.env.CI ? 1 : 2,
   retries: process.env.CI ? 1 : 0,
   reporter: [["list"], ["html", { open: "never" }]],
   use: {
@@ -42,8 +42,10 @@ export default defineConfig({
     {
       name: "screenshots-desktop",
       testMatch: /screenshots-desktop/,
-      // Platform-independent baseline names so the same committed images
-      // verify on any OS (pixel tolerance below absorbs AA differences).
+      // Organized snapshot path. The committed PNGs were generated on
+      // Windows and are a LOCAL visual reference only: OS fonts and rendering
+      // stacks differ, so these comparisons do not run in CI (see
+      // docs/testing.md). Pixel tolerance absorbs antialiasing noise only.
       snapshotPathTemplate: "./tests/e2e/screenshots/{projectName}/{arg}{ext}",
       use: { viewport: { width: 1280, height: 800 } },
     },

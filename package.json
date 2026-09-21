@@ -11,7 +11,8 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --project=desktop --project=mobile",
+    "test:visual": "playwright test --project=screenshots-desktop --project=screenshots-mobile",
     "check": "npm run lint && npm run typecheck && npm run test && npm run build"
   },
   "dependencies": {

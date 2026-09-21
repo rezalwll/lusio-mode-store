@@ -4,8 +4,11 @@ Commands:
 
 - `npm run test` — Vitest unit suite (`vitest run`, single pass).
 - `npm run test:watch` — Vitest in watch mode for local development.
-- `npm run test:e2e` — Playwright end-to-end suite (Chromium; builds the app
-  and serves the production build on port 4173 automatically).
+- `npm run test:e2e` — functional Playwright suite (desktop + mobile
+  projects; builds the app and serves the production build on port 4173
+  automatically). This is what CI runs.
+- `npm run test:visual` — screenshot-comparison suite, LOCAL/MANUAL ONLY
+  (see below). Not run in CI.
 - `npm run check` — `lint` + `typecheck` + `test` + `build` in one go.
 
 ## Unit tests (`src/**/*.test.{ts,tsx}`)
@@ -19,9 +22,11 @@ Commands:
 - `src/store/cart.test.ts` — add/merge/clamp/update/remove/clear cart lines,
   stock boundary, per-test Zustand + localStorage isolation.
 - `src/hooks/use-cart-lines.test.ts` — derived line totals, subtotal, count.
-- `src/store/coupons.test.ts` — active/inactive coupon lookup, minimum-order
-  gate, percent/fixed math, subtotal cap, and the demo admin login, labeled
-  `DEMO-ONLY BASELINE — REMOVE IN AUTH PHASE`.
+- `src/store/coupons.test.ts` — discount math through the real shared
+  `src/lib/cart-pricing.ts` helper (also used by CartPage/CheckoutPage):
+  active/inactive lookup, minimum-order gate, percent rounding, fixed cap,
+  plus the demo admin login labeled `DEMO-ONLY BASELINE — REMOVE IN AUTH
+  PHASE`.
 - `src/components/ui/button.test.tsx` — infrastructure sanity check (React
   rendering, Testing Library, jest-dom matchers, user-event).
 
@@ -35,13 +40,26 @@ Commands:
 - `checkout.spec.ts` — one full demo checkout path ending in the order
   confirmation (`DEMO CHECKOUT BASELINE — FAKE PAYMENT FLOW`). No real payment
   exists; do not treat this as payment coverage.
-- `screenshots-desktop.spec.ts` / `screenshots-mobile.spec.ts` — deterministic
-  visual baselines (animations disabled, remote imagery/fonts blocked, dynamic
-  date masked, fonts settled before capture).
+- `screenshots-desktop.spec.ts` / `screenshots-mobile.spec.ts` — visual
+  baselines (animations disabled, remote imagery/fonts blocked, dynamic
+  date masked, fonts settled before capture). LOCAL/MANUAL ONLY, run via
+  `npm run test:visual`; see below.
 
-Screenshot baselines live in `tests/e2e/screenshots/<project>/` and are
-platform-independent by config (`snapshotPathTemplate`); pixel comparison
-allows a small tolerance (`maxDiffPixels`) for font antialiasing.
+## Screenshot baselines: local reference, not CI enforcement
+
+Screenshot baselines live in `tests/e2e/screenshots/<project>/` and were
+generated on Windows. They are a LOCAL VISUAL REFERENCE for migration work,
+not a cross-platform regression gate: OS fonts and rendering stacks differ,
+and `maxDiffPixels` tolerance only absorbs antialiasing noise — it does not
+solve OS rendering differences.
+
+- Functional E2E (`npm run test:e2e`) runs in CI.
+- Visual tests (`npm run test:visual`) do NOT run in CI.
+- Visual CI enforcement should be enabled only after baselines are
+  regenerated in a controlled environment matching CI.
+- Screenshots currently render with fallback fonts because remote webfonts
+  are blocked in-test; later self-hosted/local fonts will make
+  cross-environment rendering more deterministic.
 
 ## E2E determinism notes
 

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useCartLines } from "@/hooks/use-cart-lines";
 import { productPlaceholderUrl } from "@/lib/assets";
+import { calculateDiscount } from "@/lib/cart-pricing";
 import { formatToman, toFa } from "@/lib/format";
 import { useStore } from "@/store/use-store";
 
@@ -17,10 +18,7 @@ export function CartPage() {
   const setQuantity = useStore((state) => state.setCartQuantity);
   const remove = useStore((state) => state.removeFromCart);
   const [couponCode, setCouponCode] = useState(appliedCoupon);
-  const coupon = coupons.find((item) => item.active && item.code.toLowerCase() === appliedCoupon.toLowerCase());
-  const discount = coupon && subtotal >= coupon.minOrder
-    ? Math.min(coupon.type === "percent" ? Math.round(subtotal * coupon.value / 100) : coupon.value, subtotal)
-    : 0;
+  const discount = calculateDiscount(coupons, appliedCoupon, subtotal);
   const shipping = subtotal >= settings.freeShippingThreshold ? 0 : settings.shippingCost;
   const total = Math.max(0, subtotal - discount + shipping);
 
