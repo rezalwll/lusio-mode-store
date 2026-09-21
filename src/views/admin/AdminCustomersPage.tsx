@@ -1,3 +1,5 @@
+"use client";
+
 import { Edit3, Search, UserCheck, UserRound, UserX } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import { toast } from "sonner";

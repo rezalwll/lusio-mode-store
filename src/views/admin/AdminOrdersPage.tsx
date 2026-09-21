@@ -1,3 +1,5 @@
+"use client";
+
 import { Banknote, Download, Eye, FileText, PackageCheck, Printer, Search, ShoppingBag, Truck } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";

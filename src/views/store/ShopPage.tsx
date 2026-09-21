@@ -1,4 +1,6 @@
-import { Link } from "@tanstack/react-router";
+"use client";
+
+import Link from "next/link";
 import { ChevronLeft, Filter, Search, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ProductGrid } from "@/components/product/ProductGrid";
@@ -66,7 +68,7 @@ export function ShopPage({ initialQuery = "", initialCategory = "", initialSort 
 
   return (
     <div className="container-site py-8 sm:py-12">
-      <nav className="flex items-center gap-2 text-[10px] text-muted"><Link to="/">خانه</Link><ChevronLeft className="size-3" /><span>{currentCategory?.name || "فروشگاه"}</span></nav>
+      <nav className="flex items-center gap-2 text-[10px] text-muted"><Link href="/">خانه</Link><ChevronLeft className="size-3" /><span>{currentCategory?.name || "فروشگاه"}</span></nav>
       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div><h1 className="text-3xl font-black sm:text-4xl">{currentCategory?.name || "همه محصولات"}</h1><p className="mt-2 max-w-2xl text-xs leading-6 text-muted">{currentCategory?.description || "کالکشن کامل پوشاک، کفش و اکسسوری مردانه الون استایل"}</p></div>
         <p className="text-[11px] text-muted">{toFa(visible.length)} محصول</p>

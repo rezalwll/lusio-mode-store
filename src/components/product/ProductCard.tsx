@@ -1,4 +1,6 @@
-import { Link } from "@tanstack/react-router";
+"use client";
+
+import Link from "next/link";
 import { Heart, Plus, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 import { productPlaceholderUrl } from "@/lib/assets";
@@ -24,7 +26,7 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <article className="group min-w-0">
       <div className="relative aspect-[3/4] overflow-hidden bg-[#f1e8e2]">
-        <Link to="/product/$slug" params={{ slug: product.slug }} className="block size-full">
+        <Link href={`/product/${product.slug}`} className="block size-full">
           <img
             src={product.images[0] || productPlaceholderUrl}
             alt={product.name}
@@ -81,8 +83,7 @@ export function ProductCard({ product }: { product: Product }) {
       <div className="px-1 pt-3">
         <div className="flex items-center justify-between gap-2"><p className="truncate text-[10px] text-muted">{product.categoryName}</p>{product.colors.length > 0 && <span className="shrink-0 text-[9px] text-muted">{toFa(product.colors.length)} رنگ</span>}</div>
         <Link
-          to="/product/$slug"
-          params={{ slug: product.slug }}
+          href={`/product/${product.slug}`}
           className="mt-1 line-clamp-2 min-h-11 text-[13px] font-bold leading-5 transition hover:text-brand"
         >
           {product.name}

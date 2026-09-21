@@ -1,4 +1,6 @@
-import { Link } from "@tanstack/react-router";
+"use client";
+
+import Link from "next/link";
 import { Instagram, MapPin, Phone, Send } from "lucide-react";
 import { logoFallbackUrl, logoUrl } from "@/lib/assets";
 import { useStore } from "@/store/use-store";
@@ -22,10 +24,10 @@ export function Footer() {
         <div>
           <h3 className="text-sm font-black">دسترسی سریع</h3>
           <div className="mt-4 grid gap-2.5 text-xs text-white/55">
-            <Link to="/shop" search={{ q: "", category: "", sort: "newest" }} className="hover:text-white">فروشگاه</Link>
-            <Link to="/tracking" search={{ code: "" }} className="hover:text-white">پیگیری سفارش</Link>
-            <Link to="/account" className="hover:text-white">حساب کاربری</Link>
-            <Link to="/cart" className="hover:text-white">سبد خرید</Link>
+            <Link href="/shop?q=&category=&sort=newest" className="hover:text-white">فروشگاه</Link>
+            <Link href="/tracking?code=" className="hover:text-white">پیگیری سفارش</Link>
+            <Link href="/account" className="hover:text-white">حساب کاربری</Link>
+            <Link href="/cart" className="hover:text-white">سبد خرید</Link>
           </div>
         </div>
         <div>

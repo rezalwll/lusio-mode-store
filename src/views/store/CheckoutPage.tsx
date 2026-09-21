@@ -1,5 +1,7 @@
+"use client";
+
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link } from "@tanstack/react-router";
+import Link from "next/link";
 import { CheckCircle2, ChevronLeft, CreditCard, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -65,20 +67,20 @@ export function CheckoutPage() {
         <p className="mt-3 text-xs text-muted">شماره سفارش: <strong className="text-ink" dir="ltr">{orderId}</strong></p>
         <p className="mt-1 max-w-md text-xs leading-6 text-muted">اطلاعات سفارش در حساب شما ذخیره شد و از بخش پیگیری سفارش قابل مشاهده است.</p>
         <div className="mt-7 flex flex-wrap justify-center gap-2">
-          <Link to="/tracking" search={{ code: orderId }} className="inline-flex h-11 items-center rounded-xl bg-ink px-5 text-xs font-bold text-white">پیگیری سفارش</Link>
-          <Link to="/shop" search={{ q: "", category: "", sort: "newest" }} className="inline-flex h-11 items-center rounded-xl border border-border px-5 text-xs font-bold">ادامه خرید</Link>
+          <Link href={`/tracking?code=${encodeURIComponent(orderId)}`} className="inline-flex h-11 items-center rounded-xl bg-ink px-5 text-xs font-bold text-white">پیگیری سفارش</Link>
+          <Link href="/shop?q=&category=&sort=newest" className="inline-flex h-11 items-center rounded-xl border border-border px-5 text-xs font-bold">ادامه خرید</Link>
         </div>
       </div>
     );
   }
 
   if (lines.length === 0) {
-    return <div className="container-site py-24 text-center"><h1 className="text-2xl font-black">سبد خرید خالی است</h1><Link to="/shop" search={{ q: "", category: "", sort: "newest" }} className="mt-6 inline-block rounded-xl bg-ink px-5 py-3 text-xs font-bold text-white">بازگشت به فروشگاه</Link></div>;
+    return <div className="container-site py-24 text-center"><h1 className="text-2xl font-black">سبد خرید خالی است</h1><Link href="/shop?q=&category=&sort=newest" className="mt-6 inline-block rounded-xl bg-ink px-5 py-3 text-xs font-bold text-white">بازگشت به فروشگاه</Link></div>;
   }
 
   return (
     <div className="container-site py-8 sm:py-12">
-      <nav className="flex items-center gap-2 text-[10px] text-muted"><Link to="/cart">سبد خرید</Link><ChevronLeft className="size-3" /><span>تسویه حساب</span></nav>
+      <nav className="flex items-center gap-2 text-[10px] text-muted"><Link href="/cart">سبد خرید</Link><ChevronLeft className="size-3" /><span>تسویه حساب</span></nav>
       <div className="mt-5"><p className="section-eyebrow">مرحله نهایی</p><h1 className="section-title">تکمیل و ثبت سفارش</h1></div>
       <form className="mt-8 grid gap-8 lg:grid-cols-[1fr_370px] xl:gap-12" onSubmit={handleSubmit(submit)}>
         <div className="space-y-8">

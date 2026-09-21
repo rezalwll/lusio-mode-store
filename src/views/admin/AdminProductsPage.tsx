@@ -1,3 +1,5 @@
+"use client";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Archive, Copy, Download, Edit3, Package, PackagePlus, Search, Sparkles, Trash2, TriangleAlert } from "lucide-react";
 import { useMemo, useState } from "react";

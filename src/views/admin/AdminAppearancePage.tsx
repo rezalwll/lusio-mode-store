@@ -1,3 +1,5 @@
+"use client";
+
 import { Eye, FileText, Palette, Save, Search, Sparkles } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";

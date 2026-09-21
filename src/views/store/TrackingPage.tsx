@@ -1,3 +1,5 @@
+"use client";
+
 import { Box, CheckCircle2, CircleDot, PackageCheck, Search, Truck } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";

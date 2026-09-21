@@ -1,3 +1,5 @@
+"use client";
+
 import { Banknote, Box, ChartNoAxesCombined, Download, PackageCheck, ReceiptText, ShoppingCart, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";

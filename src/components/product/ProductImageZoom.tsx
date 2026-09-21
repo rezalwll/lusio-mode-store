@@ -1,3 +1,5 @@
+"use client";
+
 import { ZoomIn } from "lucide-react";
 import { useRef, useState, type PointerEvent } from "react";
 import { productPlaceholderUrl } from "@/lib/assets";

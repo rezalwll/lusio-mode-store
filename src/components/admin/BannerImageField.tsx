@@ -1,3 +1,5 @@
+"use client";
+
 import { ImageUp, Link as LinkIcon, LoaderCircle, UploadCloud } from "lucide-react";
 import { useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { toast } from "sonner";

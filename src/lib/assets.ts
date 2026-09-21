@@ -1,5 +1,5 @@
-import logoUrl from "../../assets/images/logo-eleven.png";
-import logoFallbackUrl from "../../assets/images/logo-fallback.svg";
-import productPlaceholderUrl from "../../assets/images/product-placeholder.svg";
-
-export { logoUrl, logoFallbackUrl, productPlaceholderUrl };
+// Browser-served brand/product imagery lives in public/images so the URLs
+// resolve identically under any runtime (Vite or Next).
+export const logoUrl = "/images/logo-eleven.png";
+export const logoFallbackUrl = "/images/logo-fallback.svg";
+export const productPlaceholderUrl = "/images/product-placeholder.svg";

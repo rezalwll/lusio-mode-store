@@ -1,4 +1,7 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+"use client";
+
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { ArrowUpLeft, Flame, Heart, Menu, Search, ShoppingBag, Sparkles, UserRound, X } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import { logoFallbackUrl, logoUrl } from "@/lib/assets";
@@ -6,15 +9,22 @@ import { toFa } from "@/lib/format";
 import { resolveStorefrontCategories, type StorefrontCategory } from "@/lib/storefront-categories";
 import { useStore } from "@/store/use-store";
 
+function shopHref(q: string, category: string, sort: string) {
+  return `/shop?q=${encodeURIComponent(q)}&category=${encodeURIComponent(category)}&sort=${encodeURIComponent(sort)}`;
+}
+
 function CategoryLink({ category, className, onClick }: { category: StorefrontCategory; className: string; onClick?: () => void }) {
+  const pathname = usePathname();
   if (category.categorySlug) {
-    return <Link to="/category/$slug" params={{ slug: category.categorySlug }} className={className} activeProps={{ className: "border-brand text-brand" }} onClick={onClick}>{category.label}</Link>;
+    const href = `/category/${category.categorySlug}`;
+    const active = pathname === href;
+    return <Link href={href} className={`${className}${active ? " border-brand text-brand" : ""}`} onClick={onClick}>{category.label}</Link>;
   }
-  return <Link to="/shop" search={{ q: category.query || "", category: "", sort: "newest" }} className={className} onClick={onClick}>{category.label}</Link>;
+  return <Link href={shopHref(category.query || "", "", "newest")} className={className} onClick={onClick}>{category.label}</Link>;
 }
 
 export function Header() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const products = useStore((state) => state.products);
   const cart = useStore((state) => state.cart);
   const settings = useStore((state) => state.settings);
@@ -35,7 +45,7 @@ export function Header() {
 
   function submitSearch(event: FormEvent) {
     event.preventDefault();
-    void navigate({ to: "/shop", search: { q: query.trim(), category: "", sort: "newest" } });
+    router.push(shopHref(query.trim(), "", "newest"));
     setSearchOpen(false);
   }
 
@@ -55,7 +65,7 @@ export function Header() {
             <Menu className="size-6" />
           </button>
 
-          <Link to="/" className="shrink-0" aria-label="الون استایل">
+          <Link href="/" className="shrink-0" aria-label="الون استایل">
             <img
               src={logoUrl}
               alt="ELEVEN"
@@ -72,10 +82,10 @@ export function Header() {
             <button type="button" className="header-icon-button" onClick={() => setSearchOpen(true)} aria-label="جستجو">
               <Search />
             </button>
-            <Link to="/account" className="header-icon-button hidden sm:grid" aria-label="حساب کاربری">
+            <Link href="/account" className="header-icon-button hidden sm:grid" aria-label="حساب کاربری">
               <UserRound />
             </Link>
-            <Link to="/account" className="header-icon-button hidden sm:grid" aria-label="علاقه‌مندی‌ها">
+            <Link href="/account" className="header-icon-button hidden sm:grid" aria-label="علاقه‌مندی‌ها">
               <Heart />
             </Link>
             <button type="button" className="header-icon-button relative" onClick={() => setCartOpen(true)} aria-label="سبد خرید">
@@ -106,11 +116,11 @@ export function Header() {
           </div>
           <nav className="mt-4 grid" aria-label="منوی موبایل">
             {navigationItems.map((category) => <CategoryLink key={category.label} category={category} className="border-b border-border py-3.5 text-[13px] font-bold" onClick={() => setMenuOpen(false)} />)}
-            <Link to="/shop" search={{ q: "", category: "", sort: "newest" }} className="flex items-center justify-between border-b border-border py-3.5 text-[13px] font-black" onClick={() => setMenuOpen(false)}>تازه‌رسیده‌ها <Sparkles className="size-4 text-brand" /></Link>
-            <Link to="/shop" search={{ q: "", category: "", sort: "popular" }} className="flex items-center justify-between border-b border-border py-3.5 text-[13px] font-black" onClick={() => setMenuOpen(false)}>پرفروش‌ها <Flame className="size-4 text-brand" /></Link>
-            <Link to="/shop" search={{ q: "", category: "", sort: "newest" }} className="border-b border-border py-3.5 text-[13px] font-bold" onClick={() => setMenuOpen(false)}>همه محصولات</Link>
-            <Link to="/tracking" search={{ code: "" }} className="border-b border-border py-3.5 text-[13px] font-bold" onClick={() => setMenuOpen(false)}>پیگیری سفارش</Link>
-            <Link to="/admin" className="mt-4 rounded-xl bg-ink px-4 py-3 text-center text-xs font-bold text-white" onClick={() => setMenuOpen(false)}>ورود به پنل مدیریت</Link>
+            <Link href={shopHref("", "", "newest")} className="flex items-center justify-between border-b border-border py-3.5 text-[13px] font-black" onClick={() => setMenuOpen(false)}>تازه‌رسیده‌ها <Sparkles className="size-4 text-brand" /></Link>
+            <Link href={shopHref("", "", "popular")} className="flex items-center justify-between border-b border-border py-3.5 text-[13px] font-black" onClick={() => setMenuOpen(false)}>پرفروش‌ها <Flame className="size-4 text-brand" /></Link>
+            <Link href={shopHref("", "", "newest")} className="border-b border-border py-3.5 text-[13px] font-bold" onClick={() => setMenuOpen(false)}>همه محصولات</Link>
+            <Link href="/tracking?code=" className="border-b border-border py-3.5 text-[13px] font-bold" onClick={() => setMenuOpen(false)}>پیگیری سفارش</Link>
+            <Link href="/admin" className="mt-4 rounded-xl bg-ink px-4 py-3 text-center text-xs font-bold text-white" onClick={() => setMenuOpen(false)}>ورود به پنل مدیریت</Link>
           </nav>
         </aside>
       </div>
@@ -132,7 +142,7 @@ export function Header() {
               {searchResults.length ? (
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                   {searchResults.map((product) => (
-                    <Link key={product.id} to="/product/$slug" params={{ slug: product.slug }} onClick={() => setSearchOpen(false)} className="group flex min-w-0 gap-3 border border-border p-2 transition hover:border-ink">
+                    <Link key={product.id} href={`/product/${product.slug}`} onClick={() => setSearchOpen(false)} className="group flex min-w-0 gap-3 border border-border p-2 transition hover:border-ink">
                       <img src={product.images[0]} alt="" className="size-16 shrink-0 object-cover sm:size-20" />
                       <div className="min-w-0 self-center"><p className="truncate text-[10px] text-muted">{product.categoryName}</p><strong className="mt-1 line-clamp-2 text-[10px] leading-5 sm:text-[11px]">{product.name}</strong></div>
                       <ArrowUpLeft className="mr-auto mt-auto hidden size-4 shrink-0 sm:block" />

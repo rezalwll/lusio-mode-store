@@ -1,4 +1,6 @@
-import { Link } from "@tanstack/react-router";
+"use client";
+
+import Link from "next/link";
 import { ArrowLeft, Minus, Plus, ShoppingBag, Trash2, Truck } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -37,7 +39,7 @@ export function CartPage() {
         <span className="grid size-20 place-items-center rounded-full bg-stone-100"><ShoppingBag className="size-8 text-muted" /></span>
         <h1 className="mt-6 text-2xl font-black">سبد خریدت خالی است</h1>
         <p className="mt-2 text-xs text-muted">بین محصولات الون بگرد و استایل بعدی‌ات را پیدا کن.</p>
-        <Link to="/shop" search={{ q: "", category: "", sort: "newest" }} className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-ink px-5 text-xs font-bold text-white">مشاهده محصولات <ArrowLeft className="size-4" /></Link>
+        <Link href="/shop?q=&category=&sort=newest" className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-ink px-5 text-xs font-bold text-white">مشاهده محصولات <ArrowLeft className="size-4" /></Link>
       </div>
     );
   }
@@ -49,9 +51,9 @@ export function CartPage() {
         <section className="divide-y divide-border border-y border-border">
           {lines.map((line) => (
             <article key={`${line.productId}-${line.size}-${line.color}`} className="flex gap-4 py-5 sm:gap-5">
-              <Link to="/product/$slug" params={{ slug: line.product.slug }} className="h-35 w-26 shrink-0 overflow-hidden rounded-xl bg-stone-100 sm:h-42 sm:w-32"><img src={line.product.images[0] || productPlaceholderUrl} alt={line.product.name} className="size-full object-cover" /></Link>
+              <Link href={`/product/${line.product.slug}`} className="h-35 w-26 shrink-0 overflow-hidden rounded-xl bg-stone-100 sm:h-42 sm:w-32"><img src={line.product.images[0] || productPlaceholderUrl} alt={line.product.name} className="size-full object-cover" /></Link>
               <div className="min-w-0 flex-1">
-                <Link to="/product/$slug" params={{ slug: line.product.slug }} className="line-clamp-2 text-xs font-black leading-6 sm:text-sm">{line.product.name}</Link>
+                <Link href={`/product/${line.product.slug}`} className="line-clamp-2 text-xs font-black leading-6 sm:text-sm">{line.product.name}</Link>
                 <p className="mt-1 text-[10px] text-muted">{line.product.categoryName}</p>
                 <p className="mt-2 text-[10px] text-muted">سایز: {line.size} · رنگ: {line.color}</p>
                 <strong className="mt-3 block text-xs sm:text-sm">{formatToman(line.total)}</strong>
@@ -73,7 +75,7 @@ export function CartPage() {
             <div className="flex justify-between border-t border-border pt-4 text-sm font-black"><dt>مبلغ قابل پرداخت</dt><dd>{formatToman(total)}</dd></div>
           </dl>
           <div className="mt-5 flex gap-2"><input value={couponCode} onChange={(event) => setCouponCode(event.target.value)} placeholder="کد تخفیف" className="h-10 min-w-0 flex-1 rounded-xl border border-border bg-white px-3 text-[11px] uppercase outline-none focus:border-ink" dir="ltr" /><Button type="button" variant="outline" size="sm" className="h-10" onClick={applyCoupon}>اعمال</Button></div>
-          <Link to="/checkout" className="mt-5 grid h-12 place-items-center rounded-xl bg-brand text-sm font-black text-white shadow-[0_8px_24px_rgba(211,33,58,.18)]">ادامه و تسویه حساب</Link>
+          <Link href="/checkout" className="mt-5 grid h-12 place-items-center rounded-xl bg-brand text-sm font-black text-white shadow-[0_8px_24px_rgba(211,33,58,.18)]">ادامه و تسویه حساب</Link>
           <p className="mt-4 flex items-center justify-center gap-2 text-[9px] text-muted"><Truck className="size-4" />ارسال رایگان برای خرید بالای {formatToman(settings.freeShippingThreshold)}</p>
         </aside>
       </div>

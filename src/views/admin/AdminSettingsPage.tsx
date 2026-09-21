@@ -1,3 +1,5 @@
+"use client";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Banknote, Download, Image, RotateCcw, Save, Settings2, Truck, Upload } from "lucide-react";
 import { useRef, type ChangeEvent } from "react";

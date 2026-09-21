@@ -1,3 +1,5 @@
+"use client";
+
 import { ImagePlus, Link as LinkIcon, LoaderCircle, Star, Trash2, UploadCloud } from "lucide-react";
 import { useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { toast } from "sonner";

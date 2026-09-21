@@ -1,4 +1,6 @@
-import { Link } from "@tanstack/react-router";
+"use client";
+
+import Link from "next/link";
 import { ChevronLeft, Heart, Minus, Plus, ShieldCheck, Truck } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -25,7 +27,7 @@ export function ProductPage({ slug }: { slug: string }) {
   const availableStock = product?.variants?.length ? (selectedVariant?.stock ?? 0) : (product?.stock ?? 0);
 
   if (!product) {
-    return <div className="container-site py-24 text-center"><h1 className="text-2xl font-black">محصول پیدا نشد</h1><Link to="/shop" search={{ q: "", category: "", sort: "newest" }} className="mt-5 inline-block rounded-xl bg-ink px-5 py-3 text-xs font-bold text-white">بازگشت به فروشگاه</Link></div>;
+    return <div className="container-site py-24 text-center"><h1 className="text-2xl font-black">محصول پیدا نشد</h1><Link href="/shop?q=&category=&sort=newest" className="mt-5 inline-block rounded-xl bg-ink px-5 py-3 text-xs font-bold text-white">بازگشت به فروشگاه</Link></div>;
   }
 
   function add() {
@@ -36,7 +38,7 @@ export function ProductPage({ slug }: { slug: string }) {
 
   return (
     <div className="container-site py-7 sm:py-10">
-      <nav className="flex flex-wrap items-center gap-2 text-[10px] text-muted"><Link to="/">خانه</Link><ChevronLeft className="size-3" /><Link to="/category/$slug" params={{ slug: product.category }}>{product.categoryName}</Link><ChevronLeft className="size-3" /><span className="line-clamp-1">{product.name}</span></nav>
+      <nav className="flex flex-wrap items-center gap-2 text-[10px] text-muted"><Link href="/">خانه</Link><ChevronLeft className="size-3" /><Link href={`/category/${product.category}`}>{product.categoryName}</Link><ChevronLeft className="size-3" /><span className="line-clamp-1">{product.name}</span></nav>
       <div className="mt-6 grid gap-8 lg:grid-cols-[1.05fr_.95fr] lg:gap-14">
         <section className="grid gap-3 sm:grid-cols-[82px_1fr]">
           <div className="order-2 flex gap-2 overflow-x-auto sm:order-1 sm:flex-col">

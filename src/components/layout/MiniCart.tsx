@@ -1,4 +1,6 @@
-import { Link } from "@tanstack/react-router";
+"use client";
+
+import Link from "next/link";
 import { Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
 import { useMemo } from "react";
 import { productPlaceholderUrl } from "@/lib/assets";
@@ -34,7 +36,7 @@ export function MiniCart() {
               <span className="grid size-16 place-items-center rounded-full bg-stone-100"><ShoppingBag className="size-7 text-muted" /></span>
               <p className="mt-5 font-black">سبد خریدت خالی است</p>
               <p className="mt-1 text-xs text-muted">وقتشه چند انتخاب جذاب بهش اضافه کنی.</p>
-              <Link to="/shop" search={{ q: "", category: "", sort: "newest" }} onClick={() => setOpen(false)} className="mt-5 rounded-xl bg-ink px-5 py-2.5 text-xs font-bold text-white">رفتن به فروشگاه</Link>
+              <Link href="/shop?q=&category=&sort=newest" onClick={() => setOpen(false)} className="mt-5 rounded-xl bg-ink px-5 py-2.5 text-xs font-bold text-white">رفتن به فروشگاه</Link>
             </div>
           ) : (
             <ul className="divide-y divide-border">
@@ -42,7 +44,7 @@ export function MiniCart() {
                 <li key={`${line.productId}-${line.size}-${line.color}`} className="flex gap-3 py-4">
                   <img src={line.product.images[0] || productPlaceholderUrl} alt="" className="h-28 w-21 rounded-xl object-cover" />
                   <div className="min-w-0 flex-1">
-                    <Link to="/product/$slug" params={{ slug: line.product.slug }} onClick={() => setOpen(false)} className="line-clamp-2 text-xs font-bold leading-5">{line.product.name}</Link>
+                    <Link href={`/product/${line.product.slug}`} onClick={() => setOpen(false)} className="line-clamp-2 text-xs font-bold leading-5">{line.product.name}</Link>
                     <p className="mt-1 text-[10px] text-muted">سایز {line.size} · رنگ {line.color}</p>
                     <p className="mt-2 text-xs font-black">{formatToman(line.total)}</p>
                     <div className="mt-3 flex items-center justify-between">
@@ -63,8 +65,8 @@ export function MiniCart() {
           <div className="border-t border-border p-5">
             <div className="flex items-center justify-between"><span className="text-xs text-muted">مبلغ کل</span><strong className="text-base font-black">{formatToman(total)}</strong></div>
             <div className="mt-4 grid grid-cols-2 gap-2">
-              <Link to="/cart" onClick={() => setOpen(false)} className="grid h-11 place-items-center rounded-xl border border-ink text-xs font-bold">مشاهده سبد</Link>
-              <Link to="/checkout" onClick={() => setOpen(false)} className="grid h-11 place-items-center rounded-xl bg-brand text-xs font-bold text-white">تسویه حساب</Link>
+              <Link href="/cart" onClick={() => setOpen(false)} className="grid h-11 place-items-center rounded-xl border border-ink text-xs font-bold">مشاهده سبد</Link>
+              <Link href="/checkout" onClick={() => setOpen(false)} className="grid h-11 place-items-center rounded-xl bg-brand text-xs font-bold text-white">تسویه حساب</Link>
             </div>
           </div>
         )}
