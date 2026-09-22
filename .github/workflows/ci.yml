@@ -72,6 +72,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run db:check
+      - name: Probe database connectivity
+        run: node -e "const {Client}=require('pg');const c=new Client({connectionString:process.env.DATABASE_URL,connectionTimeoutMillis:15000});c.connect().then(async()=>{const r=await c.query('select version()');console.log('DB OK:',r.rows[0].version.split(' ').slice(0,2).join(' '));await c.end()}).catch((e)=>{console.error('DB CONNECT FAIL:',e.code,e.message);process.exit(1)})"
       - run: npm run db:migrate
       - run: npm run db:seed
       - run: npm run test:db
