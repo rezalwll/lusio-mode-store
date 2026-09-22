@@ -8,8 +8,15 @@ production runtime still serves the static catalog. Recorded decisions:
 - DB canonical money unit = `BIGINT` IRR (Rial); seed converts Toman ×10.
 - Current UI/domain money remains Toman until the repository cutover.
 - Catalog tables (`categories`, `products`, `product_images`,
-  `product_categories`) exist and are seeded; `src/server/catalog.ts`
-  is NOT switched yet.
+  `product_categories`) exist and are seeded.
+- Server catalog cutover done: `src/server/catalog.ts` is PostgreSQL-backed
+  (async, request-scoped reads, no static fallback); product/category
+  metadata, JSON-LD/breadcrumbs, and sitemap read from the database.
+- Runtime server routes require `DATABASE_URL`; DB outage surfaces as an
+  error. `next build` stays DB-independent (`/sitemap.xml` is
+  request-rendered via `force-dynamic`).
+- Client/Zustand storefront catalog (Home/Shop/Header/cart/admin CRUD)
+  remains intentionally demo/static for one more phase; that cutover is next.
 - Inventory stock stays transitional (demo semantics preserved).
 
 ## 1. Domain audit (current state)

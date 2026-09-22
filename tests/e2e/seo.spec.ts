@@ -31,6 +31,16 @@ test.describe("seo smoke", () => {
     expect(product.offers.price).toBe(2_498_000 * 10);
   });
 
+  test("category has specific title and canonical", async ({ page }) => {
+    await gotoPage(page, "/category/men-shirt");
+    await expect(page.getByRole("heading", { name: "پیراهن مردانه" })).toBeVisible();
+    await expect(page).toHaveTitle(/پیراهن مردانه/);
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+      "href",
+      "https://elevenstyle.ir/category/men-shirt",
+    );
+  });
+
   test("admin is noindex", async ({ page }) => {
     await gotoPage(page, "/admin");
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
