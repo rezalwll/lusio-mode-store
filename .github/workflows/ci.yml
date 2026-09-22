@@ -72,6 +72,14 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run db:check
+      - name: Diagnose database service state
+        if: always()
+        run: |
+          docker ps -a --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
+          SVC=$(docker ps -aq --filter "ancestor=postgres:18.6-alpine" | head -1)
+          echo "service container: ${SVC:-none-found}"
+          if [ -n "$SVC" ]; then docker logs "$SVC" 2>&1 | tail -15; fi
+          (echo > /dev/tcp/127.0.0.1/5432) && echo "TCP 127.0.0.1:5432 OPEN" || echo "TCP 127.0.0.1:5432 CLOSED"
       - run: npm run db:migrate
       - run: npm run db:seed
       - run: npm run test:db
