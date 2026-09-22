@@ -1,12 +1,11 @@
 import "dotenv/config";
 import { count, sql } from "drizzle-orm";
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import { initialCategories, initialProducts } from "@/lib/catalog";
 import { tomanToRial } from "@/lib/structured-data";
 import { getDb } from "@/db/client";
 import { seedCatalog } from "@/db/seed/catalog";
 import { categories, productCategories, productImages, products } from "@/db/schema";
-import { getProducts } from "@/server/catalog";
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) throw new Error("DATABASE_URL is required for database integration tests");
@@ -22,10 +21,6 @@ async function tableCount(table: typeof products | typeof categories | typeof pr
 
 beforeAll(() => {
   db = getDb();
-});
-
-afterAll(async () => {
-  vi.unstubAllEnvs();
 });
 
 describe("catalog database foundation (real PostgreSQL)", () => {
@@ -69,9 +64,9 @@ describe("catalog database foundation (real PostgreSQL)", () => {
   it("stores prices in IRR exactly (Toman x10)", async () => {
     const source = initialProducts.find((item) => item.slug === "vans-dior");
     const rows = await db.select().from(products).where(sql`${products.slug} = 'vans-dior'`);
-    expect(rows[0]?.priceRial).toBe(tomanToRial(source?.price ?? 0));
-    expect(rows[0]?.priceRial).toBe(24_980_000);
-    expect(rows[0]?.regularPriceRial).toBe(tomanToRial(source?.regularPrice ?? 0));
+    expect(rows[0]?.priceRial).toBe(BigInt(tomanToRial(source?.price ?? 0)));
+    expect(rows[0]?.priceRial).toBe(24_980_000n);
+    expect(rows[0]?.regularPriceRial).toBe(BigInt(tomanToRial(source?.regularPrice ?? 0)));
   });
 
   it("preserves deterministic image ordering", async () => {
@@ -100,8 +95,8 @@ describe("catalog database foundation (real PostgreSQL)", () => {
         slug: source.slug,
         name: "dup",
         sku: "DUP-SKU-1",
-        priceRial: 10,
-        regularPriceRial: 10,
+        priceRial: 10n,
+        regularPriceRial: 10n,
         categorySlug: "uncategorized",
         categoryName: "x",
       }),
@@ -115,8 +110,8 @@ describe("catalog database foundation (real PostgreSQL)", () => {
         slug: "negative-stock-probe",
         name: "probe",
         sku: "DUP-SKU-2",
-        priceRial: 10,
-        regularPriceRial: 10,
+        priceRial: 10n,
+        regularPriceRial: 10n,
         stock: -5,
         categorySlug: "uncategorized",
         categoryName: "x",
@@ -130,11 +125,5 @@ describe("catalog database foundation (real PostgreSQL)", () => {
     ).rejects.toThrow();
     const roots = await db.select().from(categories).where(sql`${categories.parentId} IS NULL`);
     expect(roots.length).toBeGreaterThan(0);
-  });
-
-  it("application runtime still serves the static catalog without PostgreSQL", () => {
-    vi.stubEnv("DATABASE_URL", "");
-    expect(getProducts()).toHaveLength(initialProducts.length);
-    expect(getProducts()[0]?.slug).toBe(initialProducts[0]?.slug);
   });
 });

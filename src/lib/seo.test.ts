@@ -41,13 +41,18 @@ describe("tomanToRial", () => {
 
 describe("rialToToman", () => {
   it("round-trips exact Rial amounts back to Toman", () => {
-    expect(rialToToman(24_980_000)).toBe(2_498_000);
-    expect(rialToToman(tomanToRial(1_490_000))).toBe(1_490_000);
+    expect(rialToToman(24_980_000n)).toBe(2_498_000);
+    expect(rialToToman(BigInt(tomanToRial(1_490_000)))).toBe(1_490_000);
+    expect(rialToToman(10n)).toBe(1);
   });
 
   it("rejects non-divisible Rial values instead of rounding them", () => {
-    expect(() => rialToToman(24_980_001)).toThrow();
-    expect(() => rialToToman(5)).toThrow();
+    expect(() => rialToToman(24_980_001n)).toThrow();
+    expect(() => rialToToman(5n)).toThrow();
+  });
+
+  it("rejects Toman values outside the safe integer range", () => {
+    expect(() => rialToToman(BigInt(Number.MAX_SAFE_INTEGER) * 10n + 10n)).toThrow();
   });
 });
 
