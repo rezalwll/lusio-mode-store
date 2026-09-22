@@ -5,7 +5,8 @@
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "allowImportingTsExtensions": true,
-    "noEmit": true
+    "noEmit": true,
+    "paths": { "@/*": ["./src/*"] }
   },
-  "include": ["vitest.config.ts", "playwright.config.ts", "next.config.ts", "tests"]
+  "include": ["vitest.config.ts", "vitest.db.config.ts", "playwright.config.ts", "drizzle.config.ts", "next.config.ts", "tests/e2e"]
 }
