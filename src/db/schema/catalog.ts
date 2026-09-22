@@ -31,8 +31,8 @@ export const products = pgTable(
     // Audit of the current mapped catalog (104 products) proved SKUs unique
     // and non-empty, so the unique constraint is safe without data fixups.
     sku: text("sku").notNull().unique(),
-    priceRial: bigint("price_rial", { mode: "number" }).notNull(),
-    regularPriceRial: bigint("regular_price_rial", { mode: "number" }).notNull(),
+    priceRial: bigint("price_rial", { mode: "bigint" }).notNull(),
+    regularPriceRial: bigint("regular_price_rial", { mode: "bigint" }).notNull(),
     onSale: boolean("on_sale").notNull().default(false),
     colors: text("colors").array().notNull().default(sql`'{}'`),
     sizes: text("sizes").array().notNull().default(sql`'{}'`),

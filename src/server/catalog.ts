@@ -1,26 +1,27 @@
 import "server-only";
 
-import { initialCategories, initialProducts } from "@/lib/catalog";
+import { getDb } from "@/db/client";
 import type { Category, Product } from "@/types/store";
+import { fetchCategories, fetchCategoryBySlug, fetchProductBySlug, fetchProducts } from "./catalog-queries";
 
-// Server-side catalog repository.
+// Server catalog boundary. PostgreSQL-backed; DB failures surface as errors
+// (never undefined, empty data, or a static fallback).
 //
-// Backing store today: the existing static catalog mapping. Server routes,
-// metadata, and sitemap must import from here — never from JSON files or
-// client state — so a future database swap changes only this module.
-// Returned shapes are the shared domain types, identical to the storefront.
-export function getProducts(): Product[] {
-  return initialProducts;
+// Reads are intentionally NOT request-memoized: metadata + page rendering a
+// product issues two small bounded reads, which keeps every call live
+// (stale-cache class of bugs excluded) and the repository honestly testable.
+export function getProducts(): Promise<Product[]> {
+  return fetchProducts(getDb());
 }
 
-export function getProductBySlug(slug: string): Product | undefined {
-  return initialProducts.find((item) => item.slug === slug && item.active);
+export function getProductBySlug(slug: string): Promise<Product | undefined> {
+  return fetchProductBySlug(getDb(), slug);
 }
 
-export function getCategories(): Category[] {
-  return initialCategories;
+export function getCategories(): Promise<Category[]> {
+  return fetchCategories(getDb());
 }
 
-export function getCategoryBySlug(slug: string): Category | undefined {
-  return initialCategories.find((item) => item.slug === slug && item.active);
+export function getCategoryBySlug(slug: string): Promise<Category | undefined> {
+  return fetchCategoryBySlug(getDb(), slug);
 }

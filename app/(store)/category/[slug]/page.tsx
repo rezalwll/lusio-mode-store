@@ -6,7 +6,7 @@ import { getCategoryBySlug } from "@/server/catalog";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const category = getCategoryBySlug(slug);
+  const category = await getCategoryBySlug(slug);
   if (!category) {
     return { title: "دسته‌بندی پیدا نشد", robots: { index: false, follow: false } };
   }
@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function CategoryRoutePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const category = getCategoryBySlug(slug);
+  const category = await getCategoryBySlug(slug);
   const crumbs = category
     ? [
         { name: "خانه", path: "/" },

@@ -6,19 +6,24 @@ import { canonical } from "./site";
 // with the numeric value converted exactly (x10). Never label an
 // unconverted Toman number as IRR.
 export const TOMAN_TO_RIAL = 10;
+const TOMAN_TO_RIAL_BIGINT = 10n;
 
 export function tomanToRial(toman: number): number {
   return Math.round(toman * TOMAN_TO_RIAL);
 }
 
-// Inverse used by future database adapters (DB stores integer IRR).
-// Rial values that are not exact multiples of 10 have no whole-Toman
-// meaning, so they are rejected instead of silently rounded.
-export function rialToToman(rial: number): number {
-  if (!Number.isInteger(rial) || rial % TOMAN_TO_RIAL !== 0) {
+// Inverse used by database adapters (DB stores integer IRR as bigint).
+// Only exact whole-Toman amounts convert: non-divisible or unsafe values
+// throw instead of silently rounding or losing precision.
+export function rialToToman(rial: bigint): number {
+  if (rial % TOMAN_TO_RIAL_BIGINT !== 0n) {
     throw new Error(`Rial value is not an exact Toman amount: ${rial}`);
   }
-  return rial / TOMAN_TO_RIAL;
+  const toman = rial / TOMAN_TO_RIAL_BIGINT;
+  if (toman > BigInt(Number.MAX_SAFE_INTEGER)) {
+    throw new Error(`Toman value exceeds safe integer range: ${rial}`);
+  }
+  return Number(toman);
 }
 
 export function availabilityFor(stock: number): "https://schema.org/InStock" | "https://schema.org/OutOfStock" {
