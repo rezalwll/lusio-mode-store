@@ -1,9 +1,16 @@
 # Data-layer plan: from demo client state to a real backend
 
-Status: architecture preparation only. No database, ORM, auth, payment, or
-inventory transactions exist yet. Current behavior is unchanged; the only
-code boundary introduced so far is a server-side catalog repository
-(`src/server/`) backed by the same static data.
+Status: catalog database foundation exists (PostgreSQL + Drizzle); the
+production runtime still serves the static catalog. Recorded decisions:
+
+- PostgreSQL selected (18.6), Drizzle ORM + Drizzle Kit selected.
+- Codebase-first migrations in `drizzle/` (SQL is source of truth).
+- DB canonical money unit = `BIGINT` IRR (Rial); seed converts Toman ×10.
+- Current UI/domain money remains Toman until the repository cutover.
+- Catalog tables (`categories`, `products`, `product_images`,
+  `product_categories`) exist and are seeded; `src/server/catalog.ts`
+  is NOT switched yet.
+- Inventory stock stays transitional (demo semantics preserved).
 
 ## 1. Domain audit (current state)
 
