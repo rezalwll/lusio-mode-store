@@ -59,7 +59,11 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/lusio_test
+      # 127.0.0.1, not localhost: pg v8 resolves localhost to ::1 first with
+      # no IPv4 fallback, while Docker publishes the service port on IPv4 —
+      # with `localhost`, drizzle-kit dies on connect without printing the
+      # underlying ECONNREFUSED (verified locally against a closed port).
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/lusio_test
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
