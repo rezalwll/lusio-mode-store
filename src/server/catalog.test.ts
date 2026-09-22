@@ -22,10 +22,18 @@ describe("server catalog repository", () => {
     expect(getCategoryBySlug("no-such-category")).toBeUndefined();
   });
 
-  it("stays compatible with the current catalog mapping", () => {
-    expect(getProducts()).toBe(initialProducts);
-    expect(getCategories()).toBe(initialCategories);
-    expect(getProducts().length).toBeGreaterThan(0);
-    expect(getCategories().length).toBeGreaterThan(0);
+  it("returns catalog values compatible with the current mapping", () => {
+    // Behavioral contract (no reference identity): a future backing-store
+    // swap keeps passing as long as values stay compatible.
+    expect(getProducts()).toEqual(initialProducts);
+    expect(getCategories()).toEqual(initialCategories);
+    expect(getProducts()).toHaveLength(initialProducts.length);
+    expect(getCategories()).toHaveLength(initialCategories.length);
+    for (const product of getProducts()) {
+      expect(product.id).toBeGreaterThan(0);
+      expect(product.slug.length).toBeGreaterThan(0);
+      expect(product.price).toBeGreaterThanOrEqual(0);
+    }
+    expect(getCategories().map((category) => category.slug)).toContain("men-shirt");
   });
 });

@@ -1,3 +1,5 @@
+import "server-only";
+
 import { initialCategories, initialProducts } from "@/lib/catalog";
 import type { Category, Product } from "@/types/store";
 
