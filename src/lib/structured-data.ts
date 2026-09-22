@@ -11,6 +11,16 @@ export function tomanToRial(toman: number): number {
   return Math.round(toman * TOMAN_TO_RIAL);
 }
 
+// Inverse used by future database adapters (DB stores integer IRR).
+// Rial values that are not exact multiples of 10 have no whole-Toman
+// meaning, so they are rejected instead of silently rounded.
+export function rialToToman(rial: number): number {
+  if (!Number.isInteger(rial) || rial % TOMAN_TO_RIAL !== 0) {
+    throw new Error(`Rial value is not an exact Toman amount: ${rial}`);
+  }
+  return rial / TOMAN_TO_RIAL;
+}
+
 export function availabilityFor(stock: number): "https://schema.org/InStock" | "https://schema.org/OutOfStock" {
   return stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock";
 }

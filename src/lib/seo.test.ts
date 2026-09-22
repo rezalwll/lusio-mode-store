@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { availabilityFor, breadcrumbItems, productJsonLd, tomanToRial } from "@/lib/structured-data";
+import { availabilityFor, breadcrumbItems, productJsonLd, rialToToman, tomanToRial } from "@/lib/structured-data";
 import { canonical, SITE_ORIGIN } from "@/lib/site";
 import type { Product } from "@/types/store";
 
@@ -36,6 +36,18 @@ describe("tomanToRial", () => {
     expect(tomanToRial(2_498_000)).toBe(24_980_000);
     expect(tomanToRial(0)).toBe(0);
     expect(tomanToRial(1)).toBe(10);
+  });
+});
+
+describe("rialToToman", () => {
+  it("round-trips exact Rial amounts back to Toman", () => {
+    expect(rialToToman(24_980_000)).toBe(2_498_000);
+    expect(rialToToman(tomanToRial(1_490_000))).toBe(1_490_000);
+  });
+
+  it("rejects non-divisible Rial values instead of rounding them", () => {
+    expect(() => rialToToman(24_980_001)).toThrow();
+    expect(() => rialToToman(5)).toThrow();
   });
 });
 
