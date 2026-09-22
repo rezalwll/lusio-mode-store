@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { count, sql } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { initialCategories, initialProducts } from "@/lib/catalog";
