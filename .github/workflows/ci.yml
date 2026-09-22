@@ -54,7 +54,7 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U postgres -d lusio_test"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -72,16 +72,6 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run db:check
-      - name: Probe database connectivity
-        run: node -e "const {Client}=require('pg');const c=new Client({connectionString:process.env.DATABASE_URL,connectionTimeoutMillis:15000});c.connect().then(async()=>{const r=await c.query('select version()');console.log('DB OK:',r.rows[0].version.split(' ').slice(0,2).join(' '));await c.end()}).catch((e)=>{console.error('DB CONNECT FAIL:',e.code,e.message);process.exit(1)})"
-      - name: Diagnose database service container
-        if: always()
-        run: |
-          docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
-          SVC=$(docker ps -q --filter "ancestor=postgres:18.6-alpine" | head -1)
-          echo "service container: ${SVC:-none-found}"
-          if [ -n "$SVC" ]; then docker logs "$SVC" 2>&1 | tail -40; fi
-          (echo > /dev/tcp/127.0.0.1/5432) && echo "TCP 127.0.0.1:5432 OPEN" || echo "TCP 127.0.0.1:5432 CLOSED"
       - run: npm run db:migrate
       - run: npm run db:seed
       - run: npm run test:db
