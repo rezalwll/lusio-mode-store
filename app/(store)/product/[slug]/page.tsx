@@ -1,17 +1,13 @@
 import type { Metadata } from "next";
 import { ProductPage } from "@/views/store/ProductPage";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { initialProducts } from "@/lib/catalog";
 import { breadcrumbItems, productJsonLd } from "@/lib/structured-data";
+import { getProductBySlug } from "@/server/catalog";
 import { initialCategories } from "@/lib/catalog";
-
-function findProduct(slug: string) {
-  return initialProducts.find((item) => item.slug === slug && item.active);
-}
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const product = findProduct(slug);
+  const product = getProductBySlug(slug);
   if (!product) {
     return { title: "محصول پیدا نشد", robots: { index: false, follow: false } };
   }
@@ -32,7 +28,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ProductRoutePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const product = findProduct(slug);
+  const product = getProductBySlug(slug);
   if (!product) return <ProductPage slug={slug} />;
   const category = initialCategories.find((item) => item.slug === product.category);
   const crumbs = category

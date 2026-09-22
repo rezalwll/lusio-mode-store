@@ -25,7 +25,13 @@ await gotoPage(page, "/product/vans-dior");
       animations: "disabled",
       maxDiffPixels: 500,
       // The dashboard eyebrow renders today's date; mask it for determinism.
-      mask: [page.locator("main").getByText(/(شنبه|یکشنبه|دوشنبه|سه‌شنبه|چهارشنبه|پنجشنبه|جمعه)/).first()],
+      // The sales chart is JS-animated (Recharts) and never pixel-stable
+      // across runs, so mask it too; layout, sidebar, and metric cards
+      // remain covered.
+      mask: [
+        page.locator("main").getByText(/(شنبه|یکشنبه|دوشنبه|سه‌شنبه|چهارشنبه|پنجشنبه|جمعه)/).first(),
+        page.locator(".recharts-wrapper").first(),
+      ],
     });
   });
 });

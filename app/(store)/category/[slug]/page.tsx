@@ -1,16 +1,12 @@
 import type { Metadata } from "next";
 import { ShopPage } from "@/views/store/ShopPage";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { initialCategories } from "@/lib/catalog";
 import { breadcrumbItems } from "@/lib/structured-data";
-
-function findCategory(slug: string) {
-  return initialCategories.find((item) => item.slug === slug && item.active);
-}
+import { getCategoryBySlug } from "@/server/catalog";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const category = findCategory(slug);
+  const category = getCategoryBySlug(slug);
   if (!category) {
     return { title: "دسته‌بندی پیدا نشد", robots: { index: false, follow: false } };
   }
@@ -26,7 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function CategoryRoutePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const category = findCategory(slug);
+  const category = getCategoryBySlug(slug);
   const crumbs = category
     ? [
         { name: "خانه", path: "/" },
