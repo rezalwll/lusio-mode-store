@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ChevronLeft, Heart, Minus, Plus, ShieldCheck, Truck } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ProductGrid } from "@/components/product/ProductGrid";
@@ -11,18 +11,15 @@ import { productPlaceholderUrl } from "@/lib/assets";
 import { formatToman, toFa } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/store/use-store";
+import type { Product, StoreSettings } from "@/types/store";
 
-export function ProductPage({ slug }: { slug: string }) {
-  const products = useStore((state) => state.products);
-  const settings = useStore((state) => state.settings);
+export function ProductPage({ product, related, settings }: { product?: Product; related: Product[]; settings: StoreSettings }) {
   const addToCart = useStore((state) => state.addToCart);
-  const product = products.find((item) => item.slug === slug && item.active);
   const initialVariant = product?.variants?.find((item) => item.stock > 0);
   const [image, setImage] = useState(0);
   const [size, setSize] = useState(initialVariant?.size || product?.sizes[0] || "فری‌سایز");
   const [color, setColor] = useState(initialVariant?.color || product?.colors[0] || "پیش‌فرض");
   const [quantity, setQuantity] = useState(1);
-  const related = useMemo(() => product ? products.filter((item) => item.active && item.id !== product.id && item.category === product.category).slice(0, 4) : [], [products, product]);
   const selectedVariant = product?.variants?.find((item) => item.size === size && item.color === color);
   const availableStock = product?.variants?.length ? (selectedVariant?.stock ?? 0) : (product?.stock ?? 0);
 

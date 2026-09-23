@@ -6,12 +6,12 @@ import { useMemo } from "react";
 import { productPlaceholderUrl } from "@/lib/assets";
 import { formatToman, toFa } from "@/lib/format";
 import { useStore } from "@/store/use-store";
+import type { Product } from "@/types/store";
 
-export function MiniCart() {
+export function MiniCart({ products }: { products: Product[] }) {
   const open = useStore((state) => state.cartOpen);
   const setOpen = useStore((state) => state.setCartOpen);
   const cart = useStore((state) => state.cart);
-  const products = useStore((state) => state.products);
   const setQuantity = useStore((state) => state.setCartQuantity);
   const remove = useStore((state) => state.removeFromCart);
   const lines = useMemo(

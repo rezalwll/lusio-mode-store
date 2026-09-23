@@ -1,11 +1,12 @@
 "use client";
 
 import { Eye, FileText, Palette, Save, Search, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/Field";
-import { useStore } from "@/store/use-store";
+import { saveStoreSettingsAction } from "@/server/actions/settings";
 import type { StoreSettings } from "@/types/store";
 
 const defaults = {
@@ -69,16 +70,18 @@ function ColorField({ label, value, onChange }: { label: string; value: string; 
   );
 }
 
-export function AdminAppearancePage() {
-  const settings = useStore((state) => state.settings);
-  const updateSettings = useStore((state) => state.updateSettings);
+export function AdminAppearancePage({ settings }: { settings: StoreSettings }) {
+  const router = useRouter();
   const [tab, setTab] = useState<Tab>("content");
   const [draft, setDraft] = useState<StoreSettings>(() => ({ ...defaults, ...settings }));
   const set = <K extends keyof StoreSettings>(key: K, value: StoreSettings[K]) => setDraft((current) => ({ ...current, [key]: value }));
 
-  function save() {
-    updateSettings(draft);
-    toast.success("ظاهر و محتوای سایت منتشر شد");
+  async function save() {
+    try {
+      await saveStoreSettingsAction(draft);
+      router.refresh();
+      toast.success("ظاهر و محتوای سایت منتشر شد");
+    } catch { toast.error("ذخیره تغییرات انجام نشد"); }
   }
 
   const tabs: Array<{ id: Tab; label: string; icon: typeof FileText }> = [

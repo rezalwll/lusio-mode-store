@@ -4,10 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { Instagram, MapPin, Phone, Send } from "lucide-react";
 import { logoFallbackUrl, logoUrl } from "@/lib/assets";
-import { useStore } from "@/store/use-store";
+import type { StoreSettings } from "@/types/store";
 
-export function Footer() {
-  const settings = useStore((state) => state.settings);
+export function Footer({ settings }: { settings: StoreSettings }) {
   return (
     <footer className="mt-20 bg-ink text-white">
       <div className="container-site grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-[1.25fr_.7fr_.7fr_1fr] lg:py-16">

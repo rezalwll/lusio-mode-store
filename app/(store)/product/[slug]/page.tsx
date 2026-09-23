@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { ProductPage } from "@/views/store/ProductPage";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbItems, productJsonLd } from "@/lib/structured-data";
-import { getCategoryBySlug, getProductBySlug } from "@/server/catalog";
+import { getCategoryBySlug, getProductBySlug, getProducts } from "@/server/catalog";
+import { getStoreSettings } from "@/server/store-settings";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -27,8 +28,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ProductRoutePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const product = await getProductBySlug(slug);
-  if (!product) return <ProductPage slug={slug} />;
+  const [product, products, settings] = await Promise.all([getProductBySlug(slug), getProducts(), getStoreSettings()]);
+  if (!product) return <ProductPage related={[]} settings={settings} />;
+  const related = products.filter((item) => item.active && item.id !== product.id && item.category === product.category).slice(0, 4);
   const category = await getCategoryBySlug(product.category);
   const crumbs = category
     ? [
@@ -44,7 +46,7 @@ export default async function ProductRoutePage({ params }: { params: Promise<{ s
     <>
       <JsonLd data={productJsonLd(product)} />
       <JsonLd data={breadcrumbItems(crumbs)} />
-      <ProductPage slug={slug} />
+      <ProductPage product={product} related={related} settings={settings} />
     </>
   );
 }

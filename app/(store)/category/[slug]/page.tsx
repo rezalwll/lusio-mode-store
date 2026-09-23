@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ShopPage } from "@/views/store/ShopPage";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbItems } from "@/lib/structured-data";
-import { getCategoryBySlug } from "@/server/catalog";
+import { getCategories, getCategoryBySlug, getProducts } from "@/server/catalog";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function CategoryRoutePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const category = await getCategoryBySlug(slug);
+  const [category, products, categories] = await Promise.all([getCategoryBySlug(slug), getProducts(), getCategories()]);
   const crumbs = category
     ? [
         { name: "خانه", path: "/" },
@@ -32,7 +32,7 @@ export default async function CategoryRoutePage({ params }: { params: Promise<{ 
   return (
     <>
       <JsonLd data={breadcrumbItems(crumbs)} />
-      <ShopPage lockedCategory={slug} />
+      <ShopPage lockedCategory={slug} products={products} categories={categories} />
     </>
   );
 }

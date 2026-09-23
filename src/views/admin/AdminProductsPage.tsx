@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Archive, Copy, Download, Edit3, Package, PackagePlus, Search, Sparkles, Trash2, TriangleAlert } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -12,8 +13,8 @@ import { Field, Input, Textarea } from "@/components/ui/Field";
 import { Modal } from "@/components/ui/Modal";
 import { productPlaceholderUrl } from "@/lib/assets";
 import { formatToman, toFa } from "@/lib/format";
-import { useStore } from "@/store/use-store";
-import type { Product, ProductVariant } from "@/types/store";
+import { archiveProductAction, bulkProductStatusAction, saveProductAction } from "@/server/actions/catalog";
+import type { Category, Product, ProductVariant } from "@/types/store";
 
 const productSchema = z.object({
   name: z.string().min(3, "نام محصول کوتاه است"),
@@ -64,11 +65,8 @@ function splitList(value: string, fallback: string) {
   return values.length ? values : [fallback];
 }
 
-export function AdminProductsPage() {
-  const products = useStore((state) => state.products);
-  const categories = useStore((state) => state.categories);
-  const saveProduct = useStore((state) => state.saveProduct);
-  const deleteProduct = useStore((state) => state.deleteProduct);
+export function AdminProductsPage({ products, categories }: { products: Product[]; categories: Category[] }) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [editing, setEditing] = useState<Product | null>(null);
@@ -138,67 +136,84 @@ export function AdminProductsPage() {
     setVariants((items) => items.map((item, itemIndex) => itemIndex === index ? { ...item, [key]: key === "stock" ? Math.max(0, Number(value) || 0) : value } : item));
   }
 
-  function submit(values: ProductForm) {
+  async function submit(values: ProductForm) {
     if (!images.length) return toast.error("حداقل یک تصویر آپلود یا اضافه کنید");
-    const selectedCategory = categories.find((item) => item.slug === values.category);
     const price = Number(values.price);
     const regularPrice = Number(values.regularPrice);
     if (regularPrice < price) return toast.error("قیمت اصلی نباید کمتر از قیمت فروش باشد");
     const sizes = splitList(values.sizes, "فری‌سایز");
     const colors = splitList(values.colors, "پیش‌فرض");
-    const product: Product = {
-      id: editing?.id ?? Math.max(0, ...products.map((item) => item.id)) + 1,
+    const result = await saveProductAction({
+      id: editing?.id,
       slug: editing?.slug ?? slugify(values.name),
       name: values.name.trim(),
       sku: values.sku.trim(),
       category: values.category,
-      categoryName: selectedCategory?.name || "بدون دسته‌بندی",
-      categorySlugs: [values.category],
       price,
       regularPrice,
-      onSale: regularPrice > price,
       images,
       colors,
       sizes,
       stock: variants.length ? variants.reduce((sum, item) => sum + item.stock, 0) : Number(values.stock),
-      active: values.status === "published",
       status: values.status,
       featured: values.featured,
       description: values.description.trim(),
       variants,
       metaTitle: values.metaTitle.trim(),
       metaDescription: values.metaDescription.trim(),
-    };
-    saveProduct(product);
+    });
+    if (!result.ok) return toast.error(result.message);
     setOpen(false);
     toast.success(editing ? "محصول ویرایش شد" : "محصول جدید ساخته شد");
+    router.refresh();
   }
 
-  function remove(product: Product) {
+  async function remove(product: Product) {
     if (window.confirm(`محصول «${product.name}» حذف شود؟`)) {
-      deleteProduct(product.id);
+      const result = await archiveProductAction(product.id);
+      if (!result.ok) return toast.error(result.message);
       setSelected((items) => items.filter((id) => id !== product.id));
-      toast.success("محصول حذف شد");
+      toast.success("محصول بایگانی شد");
+      router.refresh();
     }
   }
 
-  function duplicate(product: Product) {
-    const nextId = Math.max(0, ...products.map((item) => item.id)) + 1;
-    saveProduct({ ...product, id: nextId, slug: `${product.slug}-copy-${nextId}`, sku: `${product.sku}-COPY`, name: `${product.name} (کپی)`, active: false, status: "draft" });
+  async function duplicate(product: Product) {
+    const suffix = Date.now().toString(36).toUpperCase();
+    const result = await saveProductAction({
+      slug: `${product.slug}-copy-${suffix.toLowerCase()}`,
+      name: `${product.name} (کپی)`,
+      sku: `${product.sku}-COPY-${suffix}`,
+      category: product.category,
+      price: product.price,
+      regularPrice: product.regularPrice,
+      images: product.images,
+      colors: product.colors,
+      sizes: product.sizes,
+      stock: product.stock,
+      featured: false,
+      description: product.description,
+      status: "draft",
+      metaTitle: product.metaTitle,
+      metaDescription: product.metaDescription,
+      variants: (product.variants ?? []).map((variant, index) => ({ ...variant, id: undefined, sku: `${product.sku}-COPY-${suffix}-${index + 1}` })),
+    });
+    if (!result.ok) return toast.error(result.message);
     toast.success("یک نسخه پیش‌نویس ساخته شد");
+    router.refresh();
   }
 
-  function bulkStatus(status: NonNullable<Product["status"]>) {
-    selectedProducts.forEach((product) => saveProduct({ ...product, status, active: status === "published" }));
+  async function bulkStatus(status: NonNullable<Product["status"]>) {
+    const result = await bulkProductStatusAction({ ids: selected, status });
+    if (!result.ok) return toast.error(result.message);
     toast.success(`وضعیت ${toFa(selectedProducts.length)} محصول تغییر کرد`);
     setSelected([]);
+    router.refresh();
   }
 
-  function bulkDelete() {
-    if (!selected.length || !window.confirm(`${selected.length} محصول انتخاب‌شده حذف شوند؟`)) return;
-    selected.forEach(deleteProduct);
-    toast.success("محصولات انتخاب‌شده حذف شدند");
-    setSelected([]);
+  async function bulkDelete() {
+    if (!selected.length || !window.confirm(`${selected.length} محصول انتخاب‌شده بایگانی شوند؟`)) return;
+    await bulkStatus("archived");
   }
 
   function exportCsv() {

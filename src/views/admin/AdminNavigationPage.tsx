@@ -1,13 +1,14 @@
 "use client";
 
 import { ArrowDown, ArrowUp, Eye, EyeOff, GripVertical, Menu, Plus, Save, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Field";
 import { storefrontCategories } from "@/lib/storefront-categories";
-import { useStore } from "@/store/use-store";
-import type { HomeSectionKey, StoreNavigationItem, StoreSettings } from "@/types/store";
+import { saveNavigationAction, saveStoreSettingsAction } from "@/server/actions/settings";
+import type { Category, HomeSectionKey, StoreNavigationItem, StoreSettings } from "@/types/store";
 
 const defaultNavigation: StoreNavigationItem[] = storefrontCategories.map((item, index) => ({
   id: `nav-${index + 1}`,
@@ -38,10 +39,8 @@ function move<T>(items: T[], from: number, to: number) {
   return next;
 }
 
-export function AdminNavigationPage() {
-  const settings = useStore((state) => state.settings);
-  const categories = useStore((state) => state.categories);
-  const updateSettings = useStore((state) => state.updateSettings);
+export function AdminNavigationPage({ settings, categories }: { settings: StoreSettings; categories: Category[] }) {
+  const router = useRouter();
   const [items, setItems] = useState<StoreNavigationItem[]>(() => settings.navigationItems ?? defaultNavigation);
   const [sectionOrder, setSectionOrder] = useState<HomeSectionKey[]>(() => {
     const saved = settings.homeSectionOrder ?? defaultOrder;
@@ -64,13 +63,19 @@ export function AdminNavigationPage() {
     setItems((current) => [...current, { id: `nav-${Date.now()}`, label: "آیتم جدید", mode: "search", target: "", fallbackSlug: categories[0]?.slug || "men-shirt", active: true }]);
   }
 
-  function save() {
+  async function save() {
     if (items.some((item) => !item.label.trim() || !item.target.trim())) {
       toast.error("نام و مقصد همه آیتم‌های منو را کامل کنید");
       return;
     }
-    updateSettings({ navigationItems: items, homeSectionOrder: sectionOrder, ...visibility });
-    toast.success("منو و چیدمان صفحه اصلی منتشر شد");
+    try {
+      await Promise.all([
+        saveNavigationAction(items),
+        saveStoreSettingsAction({ ...settings, navigationItems: items, homeSectionOrder: sectionOrder, ...visibility }),
+      ]);
+      router.refresh();
+      toast.success("منو و چیدمان صفحه اصلی منتشر شد");
+    } catch { toast.error("ذخیره چیدمان انجام نشد"); }
   }
 
   return (

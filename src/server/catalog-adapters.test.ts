@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { toCategory, toProduct } from "@/server/catalog-adapters";
-import type { CategoryRow, ProductImageRow, ProductRow } from "@/server/catalog-adapters";
+import type { CategoryRow, ProductImageRow, ProductRow, ProductVariantRow } from "@/server/catalog-adapters";
 
 const categoryRow: CategoryRow = {
   id: 7,
@@ -45,6 +45,19 @@ const image = (position: number, url: string): ProductImageRow => ({
   createdAt: new Date("2026-01-01T00:00:00Z"),
 });
 
+const variant: ProductVariantRow = {
+  id: 4,
+  productId: 19276,
+  sku: "ELV-0001-M-BLK",
+  size: "M",
+  color: "مشکی",
+  stock: 3,
+  priceRial: null,
+  active: true,
+  createdAt: new Date("2026-01-01T00:00:00Z"),
+  updatedAt: new Date("2026-01-01T00:00:00Z"),
+};
+
 describe("toCategory", () => {
   it("maps NULL parent to domain 0 and preserves fields", () => {
     expect(toCategory(categoryRow)).toEqual({
@@ -87,6 +100,12 @@ describe("toProduct", () => {
   it("maps allowed statuses and rejects unexpected values", () => {
     expect(toProduct({ ...productRow, status: "draft" }, [], []).status).toBe("draft");
     expect(() => toProduct({ ...productRow, status: "mystery" }, [], [])).toThrow();
+  });
+
+  it("maps database variants to serializable storefront variants", () => {
+    expect(toProduct(productRow, [], [], [variant]).variants).toEqual([
+      { id: "4", sku: "ELV-0001-M-BLK", size: "M", color: "مشکی", stock: 3 },
+    ]);
   });
 
   it("throws on non-divisible Rial money instead of rounding", () => {

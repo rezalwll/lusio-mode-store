@@ -1,24 +1,7 @@
-"use client";
-
-import { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
 import { ShopPage } from "@/views/store/ShopPage";
+import { getCategories, getProducts } from "@/server/catalog";
 
-function ShopRouteView() {
-  const search = useSearchParams();
-  return (
-    <ShopPage
-      initialQuery={search.get("q") ?? ""}
-      initialCategory={search.get("category") ?? ""}
-      initialSort={search.get("sort") ?? "newest"}
-    />
-  );
-}
-
-export default function ShopRoutePage() {
-  return (
-    <Suspense>
-      <ShopRouteView />
-    </Suspense>
-  );
+export default async function ShopRoutePage({ searchParams }: { searchParams: Promise<{ q?: string; category?: string; sort?: string }> }) {
+  const [search, products, categories] = await Promise.all([searchParams, getProducts(), getCategories()]);
+  return <ShopPage products={products} categories={categories} initialQuery={search.q ?? ""} initialCategory={search.category ?? ""} initialSort={search.sort ?? "newest"} />;
 }

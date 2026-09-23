@@ -9,6 +9,7 @@ import { logoFallbackUrl, logoUrl } from "@/lib/assets";
 import { toFa } from "@/lib/format";
 import { resolveStorefrontCategories, type StorefrontCategory } from "@/lib/storefront-categories";
 import { useStore } from "@/store/use-store";
+import type { Product, StoreSettings } from "@/types/store";
 
 function shopHref(q: string, category: string, sort: string) {
   return `/shop?q=${encodeURIComponent(q)}&category=${encodeURIComponent(category)}&sort=${encodeURIComponent(sort)}`;
@@ -24,11 +25,9 @@ function CategoryLink({ category, className, onClick }: { category: StorefrontCa
   return <Link href={shopHref(category.query || "", "", "newest")} className={className} onClick={onClick}>{category.label}</Link>;
 }
 
-export function Header() {
+export function Header({ products, settings }: { products: Product[]; settings: StoreSettings }) {
   const router = useRouter();
-  const products = useStore((state) => state.products);
   const cart = useStore((state) => state.cart);
-  const settings = useStore((state) => state.settings);
   const setCartOpen = useStore((state) => state.setCartOpen);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);

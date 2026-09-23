@@ -5,18 +5,18 @@ import { ChevronLeft, Filter, Search, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { toFa } from "@/lib/format";
-import { useStore } from "@/store/use-store";
+import type { Category, Product } from "@/types/store";
 
 interface ShopPageProps {
   initialQuery?: string;
   initialCategory?: string;
   initialSort?: string;
   lockedCategory?: string;
+  products: Product[];
+  categories: Category[];
 }
 
-export function ShopPage({ initialQuery = "", initialCategory = "", initialSort = "newest", lockedCategory }: ShopPageProps) {
-  const products = useStore((state) => state.products);
-  const categories = useStore((state) => state.categories);
+export function ShopPage({ initialQuery = "", initialCategory = "", initialSort = "newest", lockedCategory, products, categories }: ShopPageProps) {
   const [query, setQuery] = useState(initialQuery);
   const [category, setCategory] = useState(lockedCategory || initialCategory);
   const [sort, setSort] = useState(initialSort);

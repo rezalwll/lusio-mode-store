@@ -19,7 +19,7 @@ import { productPlaceholderUrl } from "@/lib/assets";
 import { toFa } from "@/lib/format";
 import { matchesStorefrontCategory, resolveStorefrontCategories, type StorefrontCategory } from "@/lib/storefront-categories";
 import type { HomeSectionKey } from "@/types/store";
-import { useStore } from "@/store/use-store";
+import type { Category, Product, StoreSettings } from "@/types/store";
 
 const categoryLayout = [
   "sm:col-span-2 sm:row-span-2",
@@ -43,10 +43,7 @@ function StorefrontCategoryLink({ category, className, children }: { category: S
   return <Link href={shopHref(category.query || "", "", "newest")} className={className}>{children}</Link>;
 }
 
-export function HomePage() {
-  const products = useStore((state) => state.products);
-  const categories = useStore((state) => state.categories);
-  const settings = useStore((state) => state.settings);
+export function HomePage({ products, categories, settings }: { products: Product[]; categories: Category[]; settings: StoreSettings }) {
   const activeProducts = useMemo(() => products.filter((item) => item.active), [products]);
   const newArrivals = useMemo(() => [...activeProducts].sort((a, b) => b.id - a.id).slice(0, 8), [activeProducts]);
   const bestSellers = useMemo(
