@@ -48,7 +48,7 @@ export interface CartLine {
 }
 
 export type OrderStatus = "pending" | "processing" | "shipped" | "delivered" | "cancelled";
-export type PaymentStatus = "paid" | "pending" | "refunded";
+export type PaymentStatus = "paid" | "pending" | "refunded" | "failed";
 
 export interface Order {
   id: string;
@@ -58,7 +58,12 @@ export interface Order {
   city: string;
   address: string;
   postalCode: string;
+  customerNote?: string;
   createdAt: string;
+  subtotal?: number;
+  discount?: number;
+  shipping?: number;
+  couponCode?: string;
   total: number;
   status: OrderStatus;
   paymentStatus: PaymentStatus;

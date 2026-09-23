@@ -18,7 +18,7 @@ describe("useCartLines", () => {
     api().addToCart({ productId: first.id, size: "M", color: "مشکی", quantity: Math.min(2, first.stock) });
     api().addToCart({ productId: second.id, size: "L", color: "سفید", quantity: 1 });
 
-    const { result } = renderHook(() => useCartLines());
+    const { result } = renderHook(() => useCartLines(api().products));
     const expectedSubtotal = result.current.lines.reduce((sum, line) => sum + line.total, 0);
     for (const line of result.current.lines) {
       expect(line.total).toBe(line.unitPrice * line.quantity);
@@ -32,9 +32,9 @@ describe("useCartLines", () => {
     const first = api().products.find((item) => item.stock > 0);
     if (!first) throw new Error("seed data needs at least one in-stock product");
     api().addToCart({ productId: first.id, size: "M", color: "مشکی", quantity: 1 });
-    api().deleteProduct(first.id);
+    const products = api().products.filter((product) => product.id !== first.id);
 
-    const { result } = renderHook(() => useCartLines());
+    const { result } = renderHook(() => useCartLines(products));
     expect(result.current.lines).toEqual([]);
     expect(result.current.subtotal).toBe(0);
     expect(result.current.count).toBe(0);

@@ -12,6 +12,7 @@ export const paymentStatusLabels: Record<PaymentStatus, string> = {
   paid: "پرداخت‌شده",
   pending: "در انتظار پرداخت",
   refunded: "بازگشت وجه",
+  failed: "ناموفق",
 };
 
 export const orderStatusClass: Record<OrderStatus, string> = {

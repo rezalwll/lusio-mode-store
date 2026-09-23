@@ -132,6 +132,7 @@ export const orders = pgTable(
     city: text("city").notNull(),
     address: text("address").notNull(),
     postalCode: text("postal_code").notNull(),
+    customerNote: text("customer_note").notNull().default(""),
     shippingMethod: text("shipping_method").notNull(),
     subtotalRial: bigint("subtotal_rial", { mode: "bigint" }).notNull(),
     discountRial: bigint("discount_rial", { mode: "bigint" }).notNull().default(sql`0`),

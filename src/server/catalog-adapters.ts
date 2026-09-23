@@ -64,8 +64,8 @@ export function toProduct(
     status: toStatus(row.status),
     metaTitle: row.metaTitle ?? undefined,
     metaDescription: row.metaDescription ?? undefined,
-    variants: [...variants]
+    variants: variants.length ? [...variants]
       .sort((a, b) => a.id - b.id)
-      .map((variant) => ({ id: String(variant.id), sku: variant.sku, size: variant.size, color: variant.color, stock: variant.stock })),
+      .map((variant) => ({ id: String(variant.id), sku: variant.sku, size: variant.size, color: variant.color, stock: variant.stock })) : undefined,
   };
 }

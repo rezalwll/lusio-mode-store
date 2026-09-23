@@ -1,6 +1,7 @@
 "use client";
 
 import { Banknote, Download, Eye, FileText, PackageCheck, Printer, Search, ShoppingBag, Truck } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,7 @@ import { Input, Textarea } from "@/components/ui/Field";
 import { Modal } from "@/components/ui/Modal";
 import { orderStatusClass, orderStatusLabels, paymentStatusLabels } from "@/lib/admin";
 import { formatDate, formatToman, toFa } from "@/lib/format";
-import { useStore } from "@/store/use-store";
+import { updateOrderAction } from "@/server/actions/orders";
 import type { Order, OrderStatus, PaymentStatus } from "@/types/store";
 
 const statuses = Object.entries(orderStatusLabels) as [OrderStatus, string][];
@@ -19,9 +20,8 @@ function escapeHtml(value: string | number) {
   return String(value).replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[character] || character);
 }
 
-export function AdminOrdersPage() {
-  const orders = useStore((state) => state.orders);
-  const updateOrder = useStore((state) => state.updateOrder);
+export function AdminOrdersPage({ orders }: { orders: Order[] }) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
   const [selected, setSelected] = useState<Order | null>(null);
@@ -32,16 +32,21 @@ export function AdminOrdersPage() {
   const revenue = orders.filter((item) => item.status !== "cancelled").reduce((sum, item) => sum + item.total, 0);
   const active = orders.filter((item) => ["pending", "processing", "shipped"].includes(item.status)).length;
 
-  function changeStatus(id: string, value: OrderStatus) {
-    updateOrder(id, { status: value });
+  async function changeStatus(id: string, value: OrderStatus) {
+    if (value === "cancelled" && !window.confirm("سفارش لغو و موجودی اقلام به انبار برگردانده شود؟")) return;
+    const result = await updateOrderAction({ id, status: value });
+    if (!result.ok) return toast.error(result.message);
     setSelected((current) => current?.id === id ? { ...current, status: value } : current);
     toast.success("وضعیت سفارش به‌روز شد");
+    router.refresh();
   }
 
-  function saveDetails() {
+  async function saveDetails() {
     if (!selected) return;
-    updateOrder(selected.id, { trackingCode: selected.trackingCode?.trim(), internalNote: selected.internalNote?.trim(), paymentStatus: selected.paymentStatus });
+    const result = await updateOrderAction({ id: selected.id, trackingCode: selected.trackingCode?.trim(), internalNote: selected.internalNote?.trim(), paymentStatus: selected.paymentStatus });
+    if (!result.ok) return toast.error(result.message);
     toast.success("اطلاعات اجرایی سفارش ذخیره شد");
+    router.refresh();
   }
 
   function exportCsv() {
@@ -75,13 +80,13 @@ export function AdminOrdersPage() {
       </section>
       <Modal open={Boolean(selected)} onClose={() => setSelected(null)} title={`جزئیات سفارش ${selected?.id || ""}`} description={selected ? formatDate(selected.createdAt) : ""} className="max-w-2xl">
         {selected && <div className="space-y-6 p-5 sm:p-6">
-          <div className="grid gap-3 rounded-xl bg-stone-50 p-4 text-[10px] sm:grid-cols-2"><div><span className="text-muted">مشتری</span><strong className="mt-1 block text-xs">{selected.customerName}</strong><span className="mt-1 block text-muted" dir="ltr">{selected.phone}</span></div><div><span className="text-muted">نشانی ارسال</span><p className="mt-1 leading-6">{selected.city}، {selected.address}<br />کد پستی: {selected.postalCode}</p></div></div>
+          <div className="grid gap-3 rounded-xl bg-stone-50 p-4 text-[10px] sm:grid-cols-2"><div><span className="text-muted">مشتری</span><strong className="mt-1 block text-xs">{selected.customerName}</strong><span className="mt-1 block text-muted" dir="ltr">{selected.phone}</span>{selected.customerNote && <p className="mt-3 leading-5"><span className="text-muted">یادداشت مشتری: </span>{selected.customerNote}</p>}</div><div><span className="text-muted">نشانی ارسال</span><p className="mt-1 leading-6">{selected.city}، {selected.address}<br />کد پستی: {selected.postalCode}</p></div></div>
           <div className="grid gap-3 sm:grid-cols-2"><label><span className="mb-2 block text-[10px] font-bold">وضعیت سفارش</span><select value={selected.status} onChange={(event) => changeStatus(selected.id, event.target.value as OrderStatus)} className="h-11 w-full rounded-xl border border-border px-3 text-xs outline-none">{statuses.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><label><span className="mb-2 block text-[10px] font-bold">وضعیت پرداخت</span><select value={selected.paymentStatus} onChange={(event) => setSelected({ ...selected, paymentStatus: event.target.value as PaymentStatus })} className="h-11 w-full rounded-xl border border-border px-3 text-xs outline-none">{paymentStatuses.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label></div>
           <div><h3 className="text-[10px] font-black">اقلام سفارش</h3><ul className="mt-3 divide-y divide-border rounded-xl border border-border px-4">{selected.items.map((item, index) => <li key={`${item.productId}-${index}`} className="flex justify-between gap-4 py-3 text-[10px]"><span>{item.name} × {toFa(item.quantity)}<small className="mt-1 block text-muted">{item.size} / {item.color}</small></span><strong className="shrink-0">{formatToman(item.price * item.quantity)}</strong></li>)}</ul></div>
           <div className="grid gap-3 sm:grid-cols-2"><label><span className="mb-2 block text-[10px] font-bold">کد رهگیری مرسوله</span><Input value={selected.trackingCode || ""} onChange={(event) => setSelected({ ...selected, trackingCode: event.target.value })} dir="ltr" placeholder="POST-..." /></label><label className="sm:col-span-2"><span className="mb-2 block text-[10px] font-bold">یادداشت داخلی مدیر</span><Textarea value={selected.internalNote || ""} onChange={(event) => setSelected({ ...selected, internalNote: event.target.value })} rows={3} placeholder="این یادداشت به مشتری نمایش داده نمی‌شود..." /></label></div>
-          <dl className="divide-y divide-border rounded-xl border border-border px-4 text-[10px]"><div className="flex justify-between py-3"><dt className="text-muted">روش ارسال</dt><dd className="font-bold">{selected.shippingMethod}</dd></div><div className="flex justify-between py-3 text-xs"><dt className="font-black">مبلغ کل</dt><dd className="font-black">{formatToman(selected.total)}</dd></div></dl>
+          <dl className="divide-y divide-border rounded-xl border border-border px-4 text-[10px]"><div className="flex justify-between py-3"><dt className="text-muted">روش ارسال</dt><dd className="font-bold">{selected.shippingMethod}</dd></div>{selected.subtotal !== undefined && <div className="flex justify-between py-3"><dt className="text-muted">جمع کالاها</dt><dd>{formatToman(selected.subtotal)}</dd></div>}{Boolean(selected.discount) && <div className="flex justify-between py-3 text-brand"><dt>تخفیف {selected.couponCode || ""}</dt><dd>- {formatToman(selected.discount || 0)}</dd></div>}{selected.shipping !== undefined && <div className="flex justify-between py-3"><dt className="text-muted">ارسال</dt><dd>{selected.shipping ? formatToman(selected.shipping) : "رایگان"}</dd></div>}<div className="flex justify-between py-3 text-xs"><dt className="font-black">مبلغ کل</dt><dd className="font-black">{formatToman(selected.total)}</dd></div></dl>
           <div className="grid gap-2 sm:grid-cols-2"><Button variant="outline" onClick={() => printInvoice(selected)}><Printer className="size-4" />چاپ فاکتور</Button><Button variant="outline" onClick={saveDetails}><FileText className="size-4" />ذخیره رهگیری و یادداشت</Button></div>
-          <Button className="w-full" onClick={() => nextStatus[selected.status] && changeStatus(selected.id, nextStatus[selected.status]!)} disabled={!nextStatus[selected.status]}><PackageCheck className="size-4" />ثبت مرحله بعد سفارش</Button>
+          <Button className="w-full" onClick={() => { const next = nextStatus[selected.status]; if (next) void changeStatus(selected.id, next); }} disabled={!nextStatus[selected.status]}><PackageCheck className="size-4" />ثبت مرحله بعد سفارش</Button>
         </div>}
       </Modal>
     </div>

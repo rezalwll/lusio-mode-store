@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 import { useStore } from "@/store/use-store";
+import type { Product } from "@/types/store";
 
-export function useCartLines() {
+export function useCartLines(products: Product[]) {
   const cart = useStore((state) => state.cart);
-  const products = useStore((state) => state.products);
   const lines = useMemo(
     () => cart.flatMap((line) => {
       const product = products.find((item) => item.id === line.productId);
