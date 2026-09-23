@@ -2,13 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Bell, ChartNoAxesCombined, ChevronLeft, LayoutDashboard, ListTree, LogOut, Menu, Package, Palette, Percent, Search, Settings, ShoppingCart, Store, Tags, Users, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { logoUrl } from "@/lib/assets";
 import { cn } from "@/lib/utils";
-import { useStore } from "@/store/use-store";
-import { AdminLogin } from "@/components/admin/AdminLogin";
+import { logoutAdminAction } from "@/server/auth/admin-actions";
+import type { AdminSessionUser } from "@/server/auth/admin-session";
 
 const navigation = [
   { label: "داشبورد", to: "/admin", icon: LayoutDashboard, exact: true },
@@ -24,8 +24,6 @@ const navigation = [
 ] as const;
 
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
-  const logout = useStore((state) => state.logoutAdmin);
-  const router = useRouter();
   const pathname = usePathname();
   return (
     <div className="flex h-full flex-col bg-[#181818] text-white">
@@ -34,20 +32,13 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         const active = item.exact ? pathname === item.to : pathname === item.to || pathname.startsWith(`${item.to}/`);
         return <Link key={item.to} href={item.to} onClick={onNavigate} className={cn("flex h-11 items-center gap-3 rounded-xl px-3 text-[11px] font-medium text-white/58 transition hover:bg-white/8 hover:text-white", active && "!bg-white !text-ink shadow-sm")}><item.icon className="size-4.5" /><span>{item.label}</span></Link>;
       })}</nav>
-      <div className="border-t border-white/8 p-3"><Link href="/" onClick={onNavigate} className="flex h-11 items-center gap-3 rounded-xl px-3 text-[10px] text-white/55 hover:bg-white/8 hover:text-white"><Store className="size-4.5" />مشاهده فروشگاه<ChevronLeft className="mr-auto size-4" /></Link><button type="button" onClick={() => { logout(); router.push("/admin"); }} className="flex h-11 w-full items-center gap-3 rounded-xl px-3 text-[10px] text-rose-300/70 hover:bg-white/8 hover:text-rose-200"><LogOut className="size-4.5" />خروج از مدیریت</button></div>
+      <div className="border-t border-white/8 p-3"><Link href="/" onClick={onNavigate} className="flex h-11 items-center gap-3 rounded-xl px-3 text-[10px] text-white/55 hover:bg-white/8 hover:text-white"><Store className="size-4.5" />مشاهده فروشگاه<ChevronLeft className="mr-auto size-4" /></Link><form action={logoutAdminAction}><button type="submit" className="flex h-11 w-full items-center gap-3 rounded-xl px-3 text-[10px] text-rose-300/70 hover:bg-white/8 hover:text-rose-200"><LogOut className="size-4.5" />خروج امن</button></form></div>
     </div>
   );
 }
 
-export function AdminShell({ children }: { children: ReactNode }) {
-  const authenticated = useStore((state) => state.adminAuthenticated);
-  const orders = useStore((state) => state.orders);
-  const products = useStore((state) => state.products);
-  const lowStockThreshold = useStore((state) => state.settings.lowStockThreshold ?? 5);
+export function AdminShell({ children, user }: { children: ReactNode; user: AdminSessionUser }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  if (!authenticated) return <AdminLogin />;
-  const pendingCount = orders.filter((item) => item.status === "pending").length;
-  const lowStockCount = products.filter((item) => item.active && item.stock <= lowStockThreshold).length;
 
   return (
     <div className="min-h-screen bg-[#f5f5f2] text-ink lg:grid lg:grid-cols-[252px_1fr]">
@@ -57,7 +48,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
         <header className="sticky top-0 z-40 flex h-19 items-center gap-3 border-b border-black/5 bg-white/92 px-4 backdrop-blur-xl sm:px-6 lg:px-8">
           <button type="button" onClick={() => setMenuOpen(true)} className="grid size-10 place-items-center rounded-xl border border-border lg:hidden"><Menu className="size-5" /></button>
           <label className="relative hidden w-full max-w-md sm:block"><Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted" /><input type="search" placeholder="جستجو در مدیریت..." className="h-10 w-full rounded-xl border-0 bg-stone-100 pr-10 pl-3 text-[11px] outline-none focus:ring-2 focus:ring-brand/15" /></label>
-          <div className="mr-auto flex items-center gap-1"><button type="button" className="relative grid size-10 place-items-center rounded-xl text-muted hover:bg-stone-100"><Bell className="size-5" />{pendingCount > 0 && <i className="absolute left-2.5 top-2.5 size-2 rounded-full border-2 border-white bg-brand" />}</button><div className="mr-2 flex items-center gap-2 border-r border-border pr-3"><span className="grid size-9 place-items-center rounded-full bg-ink text-[10px] font-black text-white">م‌ع</span><div className="hidden sm:block"><strong className="block text-[10px]">مدیر فروشگاه</strong><small className="text-[8px] text-muted">{lowStockCount} محصول کم‌موجودی</small></div></div></div>
+          <div className="mr-auto flex items-center gap-1"><button type="button" className="relative grid size-10 place-items-center rounded-xl text-muted hover:bg-stone-100"><Bell className="size-5" /></button><div className="mr-2 flex items-center gap-2 border-r border-border pr-3"><span className="grid size-9 place-items-center rounded-full bg-ink text-[10px] font-black text-white">{user.name.slice(0, 1)}</span><div className="hidden sm:block"><strong className="block text-[10px]">{user.name}</strong><small className="text-[8px] text-muted" dir="ltr">{user.email}</small></div></div></div>
         </header>
         <main className="p-4 sm:p-6 lg:p-8">{children}</main>
       </div>

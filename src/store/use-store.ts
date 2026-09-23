@@ -154,7 +154,6 @@ interface StoreState {
   settings: StoreSettings;
   appliedCoupon: string;
   cartOpen: boolean;
-  adminAuthenticated: boolean;
   setCartOpen: (open: boolean) => void;
   setAppliedCoupon: (code: string) => void;
   addToCart: (line: CartLine) => void;
@@ -175,8 +174,6 @@ interface StoreState {
   deleteCoupon: (id: number) => void;
   updateSettings: (settings: Partial<StoreSettings>) => void;
   importBackup: (backup: StoreBackup) => void;
-  loginAdmin: (password: string) => boolean;
-  logoutAdmin: () => void;
   resetStore: () => void;
 }
 
@@ -195,7 +192,6 @@ export const useStore = create<StoreState>()(
       settings: initialSettings,
       appliedCoupon: "",
       cartOpen: false,
-      adminAuthenticated: false,
       setCartOpen: (cartOpen) => set({ cartOpen }),
       setAppliedCoupon: (appliedCoupon) => set({ appliedCoupon }),
       addToCart: (line) => {
@@ -329,12 +325,6 @@ export const useStore = create<StoreState>()(
           coupons: Array.isArray(backup.coupons) ? backup.coupons : state.coupons,
           settings: backup.settings && typeof backup.settings === "object" ? { ...state.settings, ...backup.settings } : state.settings,
         })),
-      loginAdmin: (password) => {
-        const success = password === "eleven1405";
-        if (success) set({ adminAuthenticated: true });
-        return success;
-      },
-      logoutAdmin: () => set({ adminAuthenticated: false }),
       resetStore: () =>
         set({
           products: initialProducts,
@@ -363,7 +353,6 @@ export const useStore = create<StoreState>()(
         coupons: state.coupons,
         settings: state.settings,
         appliedCoupon: state.appliedCoupon,
-        adminAuthenticated: state.adminAuthenticated,
       }),
     },
   ),

@@ -18,7 +18,7 @@ export interface CommerceSeedCounts {
 
 export async function seedCommerce(db: Db): Promise<CommerceSeedCounts> {
   const navigation = defaultStoreSettings.navigationItems ?? [];
-  const { navigationItems: _navigationItems, ...settingsData } = defaultStoreSettings;
+  const settingsData = Object.fromEntries(Object.entries(defaultStoreSettings).filter(([key]) => key !== "navigationItems"));
 
   return db.transaction(async (tx) => {
     await tx.insert(storeSettings).values({ id: 1, data: settingsData as unknown as Record<string, unknown> }).onConflictDoNothing();

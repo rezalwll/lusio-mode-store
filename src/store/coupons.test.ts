@@ -9,11 +9,7 @@ function discountFor(subtotal: number): number {
 
 beforeEach(() => {
   localStorage.clear();
-  const api = useStore.getState();
-  api.resetStore();
-  // resetStore intentionally leaves the admin session flag untouched
-  // (current store behavior), so tests reset it explicitly for isolation.
-  api.logoutAdmin();
+  useStore.getState().resetStore();
 });
 
 describe("cart-pricing discount baseline", () => {
@@ -70,24 +66,5 @@ describe("cart-pricing discount baseline", () => {
     api().clearCart();
     expect(api().appliedCoupon).toBe("");
     expect(discountFor(5_000_000)).toBe(0);
-  });
-});
-
-describe("DEMO-ONLY BASELINE — REMOVE IN AUTH PHASE: admin login", () => {
-  it("authenticates with the demo password", () => {
-    expect(useStore.getState().loginAdmin("eleven1405")).toBe(true);
-    expect(useStore.getState().adminAuthenticated).toBe(true);
-  });
-
-  it("rejects a wrong password without authenticating", () => {
-    expect(useStore.getState().loginAdmin("wrong-password")).toBe(false);
-    expect(useStore.getState().adminAuthenticated).toBe(false);
-  });
-
-  it("logs out back to unauthenticated", () => {
-    const api = () => useStore.getState();
-    api().loginAdmin("eleven1405");
-    api().logoutAdmin();
-    expect(api().adminAuthenticated).toBe(false);
   });
 });
