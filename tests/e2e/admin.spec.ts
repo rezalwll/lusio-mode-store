@@ -17,36 +17,16 @@ test.describe("authenticated admin smoke", () => {
     await expect(page.getByRole("heading", { name: "ورود به پنل مدیریت" })).toBeVisible();
   });
 
-  test("database user login opens the dashboard", async ({ page }) => {
-    await loginAsAdmin(page);
-  });
-
-  test("products page loads", async ({ page }) => {
+  test("database user can open the core operating modules", async ({ page }) => {
     await loginAsAdmin(page);
     await gotoPage(page, "/admin/products");
     await expect(page.getByRole("heading", { name: "مدیریت محصولات" })).toBeVisible();
-  });
-
-  test("orders page loads", async ({ page }) => {
-    await loginAsAdmin(page);
     await gotoPage(page, "/admin/orders");
     await expect(page.getByRole("heading", { name: "مدیریت سفارش‌ها" })).toBeVisible();
-  });
-
-  test("customers page loads", async ({ page }) => {
-    await loginAsAdmin(page);
     await gotoPage(page, "/admin/customers");
     await expect(page.getByRole("heading", { name: "مدیریت مشتریان" })).toBeVisible();
-  });
-
-  test("settings page loads", async ({ page }) => {
-    await loginAsAdmin(page);
     await gotoPage(page, "/admin/settings");
     await expect(page.getByRole("heading", { name: "تنظیمات و محتوا" })).toBeVisible();
-  });
-
-  test("inventory page loads", async ({ page }) => {
-    await loginAsAdmin(page);
     await gotoPage(page, "/admin/inventory");
     await expect(page.getByRole("heading", { name: "انبار فروشگاه" })).toBeVisible();
   });

@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/Field";
 import { logoUrl } from "@/lib/assets";
 import { loginAdminAction } from "@/server/auth/admin-actions";
 
+const adminCoverUrl = encodeURI("https://elevenstyle.ir/wp-content/uploads/2026/09/پیراهن-کتان-مستر-2.webp");
+
 export function AdminLogin({ next = "/admin" }: { next?: string }) {
   const [state, formAction, pending] = useActionState(loginAdminAction, {});
   const [show, setShow] = useState(false);
@@ -15,7 +17,7 @@ export function AdminLogin({ next = "/admin" }: { next?: string }) {
   return (
     <div className="grid min-h-screen bg-[#f4f4f1] lg:grid-cols-[1.05fr_.95fr]">
       <section className="relative hidden overflow-hidden bg-ink lg:block">
-        <img src="https://elevenstyle.ir/wp-content/uploads/2026/09/پیراهن-کتان-مستر-2.webp" alt="" className="absolute inset-0 size-full object-cover opacity-60" />
+        <img src={adminCoverUrl} alt="" className="absolute inset-0 size-full object-cover opacity-60" />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
         <div className="absolute inset-x-0 bottom-0 p-14 text-white xl:p-20">
           <p className="text-xs font-bold text-white/60">ELEVEN COMMERCE</p>

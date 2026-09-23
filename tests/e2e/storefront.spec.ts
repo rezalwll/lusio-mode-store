@@ -35,11 +35,11 @@ test.describe("storefront smoke", () => {
 
   test("account renders the login prompt", async ({ page }) => {
     await gotoPage(page, "/account");
-    await expect(page.getByRole("heading", { name: "ورود به حساب کاربری" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "ورود امن به حساب" })).toBeVisible();
   });
 
   test("tracking renders the lookup form", async ({ page }) => {
     await gotoPage(page, "/tracking");
-    await expect(page.getByRole("heading", { name: "پیگیری سفارش" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "پیگیری امن سفارش" })).toBeVisible();
   });
 });
