@@ -7,7 +7,7 @@ import { useStore } from "@/store/use-store";
 
 // Rehydrates persisted browser state once, after mount: the first server and
 // client renders both use default store state (skipHydration), then this
-// effect restores the returning user's persisted cart/settings/admin state
+// effect restores only the returning user's cart identifiers and coupon code
 // through normal Zustand subscribers.
 function StoreHydrator() {
   useEffect(() => {
