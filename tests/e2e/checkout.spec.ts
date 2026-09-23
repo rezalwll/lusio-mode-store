@@ -1,10 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { gotoPage } from "./helpers";
 
-// DEMO CHECKOUT BASELINE — FAKE PAYMENT FLOW.
-// Covers the current client-side checkout path (no real payment) so the
-// Next.js migration can preserve the exact behavior.
-test.describe("demo checkout baseline", () => {
+test.describe("server-owned checkout", () => {
   test("product → cart → checkout → confirmation", async ({ page }) => {
     await gotoPage(page, "/product/vans-dior");
     await expect(page.getByRole("heading", { name: "Vans Dior الون" })).toBeVisible();
@@ -23,10 +20,11 @@ test.describe("demo checkout baseline", () => {
     await page.getByLabel("کد پستی").fill("1234567890");
     await page.getByLabel("نشانی کامل").fill("خیابان ولیعصر، کوچه یاس، پلاک ۱۰");
 
-    await page.getByRole("button", { name: "پرداخت و ثبت سفارش" }).click();
+    await page.getByRole("button", { name: "ثبت سفارش" }).click();
 
     await expect(page.getByRole("heading", { name: "سفارش شما ثبت شد" })).toBeVisible();
     await expect(page.getByText("شماره سفارش:")).toBeVisible();
-    await expect(page.getByText("پرداخت با موفقیت انجام شد")).toBeVisible();
+    await expect(page.getByText("در انتظار پرداخت", { exact: true })).toBeVisible();
+    await expect(page.getByText(/هیچ پرداخت موفقی شبیه‌سازی نشده است/)).toBeVisible();
   });
 });

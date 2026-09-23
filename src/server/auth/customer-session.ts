@@ -5,6 +5,7 @@ import { and, eq, gt } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { getDb } from "@/db/client";
 import { customers, customerSessions } from "@/db/schema";
+import { shouldUseSecureSessionCookie } from "./cookie-options";
 
 const COOKIE_NAME = "eleven_customer_session";
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30;
@@ -27,7 +28,7 @@ export async function createCustomerSession(customerId: number) {
   const token = randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
   await getDb().insert(customerSessions).values({ tokenHash: hashToken(token), customerId, expiresAt });
-  (await cookies()).set(COOKIE_NAME, token, { httpOnly: true, sameSite: "lax", secure: process.env.SESSION_COOKIE_SECURE === "true" || process.env.NODE_ENV === "production", path: "/", expires: expiresAt });
+  (await cookies()).set(COOKIE_NAME, token, { httpOnly: true, sameSite: "lax", secure: shouldUseSecureSessionCookie(), path: "/", expires: expiresAt });
 }
 
 export async function getCustomerSession(): Promise<CustomerSessionUser | null> {
@@ -45,4 +46,3 @@ export async function destroyCustomerSession() {
   if (token) await getDb().delete(customerSessions).where(eq(customerSessions.tokenHash, hashToken(token)));
   cookieStore.delete(COOKIE_NAME);
 }
-

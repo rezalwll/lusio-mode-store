@@ -6,6 +6,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getDb } from "@/db/client";
 import { adminSessions, adminUsers } from "@/db/schema";
+import { shouldUseSecureSessionCookie } from "./cookie-options";
 
 const COOKIE_NAME = "eleven_admin_session";
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 14;
@@ -30,7 +31,7 @@ export async function createAdminSession(userId: string) {
   cookieStore.set(COOKIE_NAME, token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.SESSION_COOKIE_SECURE === "true" || process.env.NODE_ENV === "production",
+    secure: shouldUseSecureSessionCookie(),
     path: "/",
     expires: expiresAt,
   });

@@ -1,13 +1,10 @@
 import { expect, type Page } from "@playwright/test";
 
-// DEMO-ONLY ADMIN AUTH BASELINE: logs in with the current client-side demo
-// password. Do not treat this as production authentication coverage.
-// NOTE: the login form's <label> is not associated with its <input>, so the
-// password field is located by form + type instead of by accessible label.
 export async function loginAsAdmin(page: Page) {
   await gotoPage(page, "/admin");
-  await page.locator('form input[type="password"]').fill("eleven1405");
-  await page.getByRole("button", { name: "ورود به مدیریت" }).click();
+  await page.getByLabel("ایمیل مدیر").fill(process.env.ADMIN_BOOTSTRAP_EMAIL || "owner@example.com");
+  await page.getByLabel("رمز عبور").fill(process.env.ADMIN_BOOTSTRAP_PASSWORD || "ci-only-password-1234");
+  await page.getByRole("button", { name: "ورود امن به مدیریت" }).click();
   await expect(page.getByRole("heading", { name: /سلام، روزت بخیر/ })).toBeVisible();
 }
 

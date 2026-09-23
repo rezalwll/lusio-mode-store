@@ -43,6 +43,12 @@ jobs:
           --health-retries 5
     env:
       DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/lusio_test
+      ADMIN_BOOTSTRAP_EMAIL: owner@example.com
+      ADMIN_BOOTSTRAP_PASSWORD: ci-only-password-1234
+      ADMIN_BOOTSTRAP_NAME: مدیر تست
+      SESSION_COOKIE_SECURE: "false"
+      OTP_PROVIDER: development
+      OTP_HASH_SECRET: ci-only-otp-hash-secret-at-least-32-characters
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
