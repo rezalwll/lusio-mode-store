@@ -2,9 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Bell, ChartNoAxesCombined, ChevronLeft, Images, LayoutDashboard, ListTree, LogOut, Menu, Package, Palette, Percent, Search, Settings, ShoppingCart, Store, Tags, Warehouse, Users, X } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { logoUrl } from "@/lib/assets";
 import { cn } from "@/lib/utils";
 import { logoutAdminAction } from "@/server/auth/admin-actions";
@@ -40,7 +40,19 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 export function AdminShell({ children, user }: { children: ReactNode; user: AdminSessionUser }) {
+  const pathname = usePathname();
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [quickQuery, setQuickQuery] = useState("");
+  const currentModule = navigation.find((item) => item.exact ? pathname === item.to : pathname === item.to || pathname.startsWith(`${item.to}/`));
+
+  function quickSearch(event: FormEvent) {
+    event.preventDefault();
+    const term = quickQuery.trim();
+    if (!term) return;
+    const module = navigation.find((item) => item.label.includes(term));
+    router.push(module?.to ?? `/admin/products?q=${encodeURIComponent(term)}`);
+  }
 
   return (
     <div className="min-h-screen bg-[#f5f5f2] text-ink lg:grid lg:grid-cols-[252px_1fr]">
@@ -49,7 +61,8 @@ export function AdminShell({ children, user }: { children: ReactNode; user: Admi
       <div className="min-w-0 lg:col-start-2">
         <header className="sticky top-0 z-40 flex h-19 items-center gap-3 border-b border-black/5 bg-white/92 px-4 backdrop-blur-xl sm:px-6 lg:px-8">
           <button type="button" onClick={() => setMenuOpen(true)} className="grid size-10 place-items-center rounded-xl border border-border lg:hidden"><Menu className="size-5" /></button>
-          <label className="relative hidden w-full max-w-md sm:block"><Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted" /><input type="search" placeholder="جستجو در مدیریت..." className="h-10 w-full rounded-xl border-0 bg-stone-100 pr-10 pl-3 text-[11px] outline-none focus:ring-2 focus:ring-brand/15" /></label>
+          <div className="hidden min-w-28 lg:block"><span className="text-[8px] text-muted">پنل مدیریت</span><strong className="block text-[10px]">{currentModule?.label ?? "مدیریت"}</strong></div>
+          <form onSubmit={quickSearch} className="relative hidden w-full max-w-md sm:block"><Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted" /><input type="search" value={quickQuery} onChange={(event) => setQuickQuery(event.target.value)} placeholder="نام محصول یا بخش مدیریت..." className="h-10 w-full rounded-xl border-0 bg-stone-100 pr-10 pl-3 text-[11px] outline-none focus:ring-2 focus:ring-brand/15" /></form>
           <div className="mr-auto flex items-center gap-1"><button type="button" className="relative grid size-10 place-items-center rounded-xl text-muted hover:bg-stone-100"><Bell className="size-5" /></button><div className="mr-2 flex items-center gap-2 border-r border-border pr-3"><span className="grid size-9 place-items-center rounded-full bg-ink text-[10px] font-black text-white">{user.name.slice(0, 1)}</span><div className="hidden sm:block"><strong className="block text-[10px]">{user.name}</strong><small className="text-[8px] text-muted" dir="ltr">{user.email}</small></div></div></div>
         </header>
         <main className="p-4 sm:p-6 lg:p-8">{children}</main>

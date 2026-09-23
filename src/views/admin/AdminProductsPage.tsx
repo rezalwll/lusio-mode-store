@@ -65,9 +65,9 @@ function splitList(value: string, fallback: string) {
   return values.length ? values : [fallback];
 }
 
-export function AdminProductsPage({ products, categories }: { products: Product[]; categories: Category[] }) {
+export function AdminProductsPage({ products, categories, initialQuery = "" }: { products: Product[]; categories: Category[]; initialQuery?: string }) {
   const router = useRouter();
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialQuery);
   const [category, setCategory] = useState("all");
   const [editing, setEditing] = useState<Product | null>(null);
   const [open, setOpen] = useState(false);
