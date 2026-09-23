@@ -2,9 +2,9 @@ import "server-only";
 
 import { desc, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db/client";
-import { coupons, orderItems, orders } from "@/db/schema";
+import { coupons, customers, orderItems, orders } from "@/db/schema";
 import { rialToToman } from "@/lib/structured-data";
-import type { Coupon, Order, OrderStatus, PaymentStatus } from "@/types/store";
+import type { Coupon, Customer, Order, OrderStatus, PaymentStatus } from "@/types/store";
 
 const ORDER_STATUSES = new Set<OrderStatus>(["pending", "processing", "shipped", "delivered", "cancelled"]);
 const PAYMENT_STATUSES = new Set<PaymentStatus>(["pending", "paid", "refunded", "failed"]);
@@ -76,4 +76,26 @@ export async function getCoupons(): Promise<Coupon[]> {
     expiresAt: coupon.expiresAt?.toISOString().slice(0, 10) ?? "",
     active: coupon.active,
   }));
+}
+
+export async function getCustomers(): Promise<Customer[]> {
+  const db = getDb();
+  const [customerRows, orderRows] = await Promise.all([
+    db.select().from(customers).orderBy(desc(customers.createdAt)),
+    db.select({ customerId: orders.customerId, totalRial: orders.totalRial, status: orders.status }).from(orders),
+  ]);
+  return customerRows.map((customer) => {
+    const customerOrders = orderRows.filter((order) => order.customerId === customer.id && order.status !== "cancelled");
+    return {
+      id: customer.id,
+      name: customer.name,
+      phone: customer.phone,
+      email: customer.email ?? "",
+      city: customer.city,
+      ordersCount: customerOrders.length,
+      totalSpent: customerOrders.reduce((sum, order) => sum + rialToToman(order.totalRial), 0),
+      joinedAt: new Intl.DateTimeFormat("fa-IR").format(customer.createdAt),
+      active: customer.active,
+    };
+  });
 }

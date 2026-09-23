@@ -6,8 +6,7 @@ import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YA
 import { Button } from "@/components/ui/button";
 import { orderStatusLabels } from "@/lib/admin";
 import { formatToman, toFa } from "@/lib/format";
-import { useStore } from "@/store/use-store";
-import type { OrderStatus } from "@/types/store";
+import type { Customer, Order, OrderStatus } from "@/types/store";
 
 type Range = "7" | "30" | "90" | "all";
 
@@ -29,33 +28,32 @@ function downloadCsv(rows: Array<Array<string | number>>, fileName: string) {
   URL.revokeObjectURL(url);
 }
 
-export function AdminReportsPage() {
-  const orders = useStore((state) => state.orders);
-  const customers = useStore((state) => state.customers);
+export function AdminReportsPage({ orders, customers, nowIso }: { orders: Order[]; customers: Customer[]; nowIso: string }) {
   const [range, setRange] = useState<Range>("30");
   const filteredOrders = useMemo(() => {
     if (range === "all") return orders;
-    const start = new Date();
+    const start = new Date(nowIso);
     start.setHours(0, 0, 0, 0);
     start.setDate(start.getDate() - (Number(range) - 1));
     return orders.filter((order) => new Date(order.createdAt) >= start);
-  }, [orders, range]);
-  const successfulOrders = filteredOrders.filter((order) => order.status !== "cancelled");
+  }, [orders, range, nowIso]);
+  const successfulOrders = useMemo(() => filteredOrders.filter((order) => order.status !== "cancelled"), [filteredOrders]);
   const revenue = successfulOrders.reduce((sum, order) => sum + order.total, 0);
   const itemsSold = successfulOrders.reduce((sum, order) => sum + order.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0);
   const averageOrder = successfulOrders.length ? Math.round(revenue / successfulOrders.length) : 0;
   const deliveredRate = successfulOrders.length ? Math.round((successfulOrders.filter((order) => order.status === "delivered").length / successfulOrders.length) * 100) : 0;
 
   const salesTrend = useMemo(() => {
-    const dayCount = range === "all" ? Math.max(7, Math.ceil((Date.now() - Math.min(...orders.map((order) => new Date(order.createdAt).getTime()), Date.now())) / 86_400_000) + 1) : Number(range);
+    const now = Date.parse(nowIso);
+    const dayCount = range === "all" ? Math.max(7, Math.ceil((now - Math.min(...orders.map((order) => new Date(order.createdAt).getTime()), now)) / 86_400_000) + 1) : Number(range);
     return Array.from({ length: Math.min(dayCount, 90) }, (_, index) => {
-      const date = new Date();
+      const date = new Date(nowIso);
       date.setDate(date.getDate() - (Math.min(dayCount, 90) - 1 - index));
       const key = date.toISOString().slice(0, 10);
       const dailyOrders = successfulOrders.filter((order) => order.createdAt.slice(0, 10) === key);
       return { date: new Intl.DateTimeFormat("fa-IR", { month: "short", day: "numeric" }).format(date), sales: dailyOrders.reduce((sum, order) => sum + order.total, 0), orders: dailyOrders.length };
     });
-  }, [orders, range, successfulOrders]);
+  }, [orders, range, successfulOrders, nowIso]);
 
   const topProducts = useMemo(() => {
     const result = new Map<number, { name: string; quantity: number; revenue: number }>();

@@ -74,7 +74,7 @@ export function AdminProductsPage({ products, categories }: { products: Product[
   const [images, setImages] = useState<string[]>([]);
   const [variants, setVariants] = useState<ProductVariant[]>([]);
   const [selected, setSelected] = useState<number[]>([]);
-  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<ProductForm>({ resolver: zodResolver(productSchema), defaultValues: emptyValues });
+  const { register, handleSubmit, reset, getValues, formState: { errors } } = useForm<ProductForm>({ resolver: zodResolver(productSchema), defaultValues: emptyValues });
 
   const filtered = useMemo(() => {
     const term = query.trim().toLowerCase();
@@ -119,9 +119,9 @@ export function AdminProductsPage({ products, categories }: { products: Product[
   }
 
   function generateVariants() {
-    const sizes = splitList(watch("sizes"), "فری‌سایز");
-    const colors = splitList(watch("colors"), "پیش‌فرض");
-    const baseSku = watch("sku") || "ELV";
+    const sizes = splitList(getValues("sizes"), "فری‌سایز");
+    const colors = splitList(getValues("colors"), "پیش‌فرض");
+    const baseSku = getValues("sku") || "ELV";
     const previous = new Map(variants.map((item) => [`${item.size}-${item.color}`, item]));
     const rows = sizes.flatMap((size, sizeIndex) => colors.map((color, colorIndex) => {
       const old = previous.get(`${size}-${color}`);

@@ -61,6 +61,15 @@ export const bulkProductStatusSchema = z.object({
   status: z.enum(["published", "draft", "archived"]),
 });
 
+export const inventoryInputSchema = z.object({
+  productId: z.number().int().positive(),
+  stock: z.number().int().nonnegative().max(1_000_000),
+  variants: z.array(z.object({
+    id: z.coerce.number().int().positive(),
+    stock: z.number().int().nonnegative().max(1_000_000),
+  })).max(500),
+});
+
 export type ProductInput = z.input<typeof productInputSchema>;
 export type CategoryInput = z.input<typeof categoryInputSchema>;
-
+export type InventoryInput = z.input<typeof inventoryInputSchema>;

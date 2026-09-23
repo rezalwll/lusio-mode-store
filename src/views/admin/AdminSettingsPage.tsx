@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Banknote, Image, Save, Settings2, Truck } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { BannerImageField } from "@/components/admin/BannerImageField";
@@ -46,7 +46,7 @@ type SettingsForm = z.infer<typeof settingsSchema>;
 
 export function AdminSettingsPage({ settings }: { settings: StoreSettings }) {
   const router = useRouter();
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<SettingsForm>({
+  const { register, handleSubmit, control, setValue, formState: { errors } } = useForm<SettingsForm>({
     resolver: zodResolver(settingsSchema),
     defaultValues: {
       ...settings,
@@ -71,9 +71,9 @@ export function AdminSettingsPage({ settings }: { settings: StoreSettings }) {
       lowStockThreshold: String(settings.lowStockThreshold ?? 5),
     },
   });
-  const heroImage = watch("heroImage");
-  const heroMobileImage = watch("heroMobileImage");
-  const festivalImage = watch("festivalImage");
+  const heroImage = useWatch({ control, name: "heroImage" });
+  const heroMobileImage = useWatch({ control, name: "heroMobileImage" });
+  const festivalImage = useWatch({ control, name: "festivalImage" });
 
   async function submit(values: SettingsForm) {
     try {

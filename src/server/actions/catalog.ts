@@ -1,13 +1,13 @@
 "use server";
 
-import { eq, inArray, max, sql } from "drizzle-orm";
+import { and, eq, inArray, max, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getDb } from "@/db/client";
 import { categories, productCategories, productImages, products, productVariants } from "@/db/schema";
 import { tomanToRial } from "@/lib/structured-data";
 import { requireAdmin } from "@/server/auth/admin-session";
 import { assertSameOrigin } from "@/server/security/origin";
-import { bulkProductStatusSchema, categoryInputSchema, productInputSchema, type CategoryInput, type ProductInput } from "@/server/validation/catalog";
+import { bulkProductStatusSchema, categoryInputSchema, inventoryInputSchema, productInputSchema, type CategoryInput, type InventoryInput, type ProductInput } from "@/server/validation/catalog";
 
 type MutationResult = { ok: true; id?: number } | { ok: false; message: string };
 
@@ -23,6 +23,46 @@ function refreshCatalog() {
   revalidatePath("/", "layout");
   revalidatePath("/admin/products");
   revalidatePath("/admin/categories");
+  revalidatePath("/admin/inventory");
+}
+
+export async function updateInventoryAction(input: InventoryInput): Promise<MutationResult> {
+  await assertSameOrigin();
+  await requireAdmin(["owner", "admin", "editor"]);
+  const parsed = inventoryInputSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "موجودی معتبر نیست" };
+
+  try {
+    await getDb().transaction(async (tx) => {
+      const [product] = await tx.select({ id: products.id }).from(products).where(eq(products.id, parsed.data.productId)).for("update").limit(1);
+      if (!product) throw new Error("PRODUCT_NOT_FOUND");
+      const existingVariants = await tx.select({ id: productVariants.id }).from(productVariants)
+        .where(and(eq(productVariants.productId, product.id), eq(productVariants.active, true)))
+        .for("update");
+
+      if (existingVariants.length) {
+        const submittedIds = new Set(parsed.data.variants.map((variant) => variant.id));
+        if (submittedIds.size !== existingVariants.length || existingVariants.some((variant) => !submittedIds.has(variant.id))) {
+          throw new Error("STALE_VARIANTS");
+        }
+        for (const variant of parsed.data.variants) {
+          await tx.update(productVariants).set({ stock: variant.stock, updatedAt: new Date() })
+            .where(and(eq(productVariants.id, variant.id), eq(productVariants.productId, product.id)));
+        }
+        const totalStock = parsed.data.variants.reduce((sum, variant) => sum + variant.stock, 0);
+        await tx.update(products).set({ stock: totalStock, updatedAt: new Date() }).where(eq(products.id, product.id));
+      } else {
+        if (parsed.data.variants.length) throw new Error("STALE_VARIANTS");
+        await tx.update(products).set({ stock: parsed.data.stock, updatedAt: new Date() }).where(eq(products.id, product.id));
+      }
+    });
+    refreshCatalog();
+    return { ok: true, id: parsed.data.productId };
+  } catch (error) {
+    if (error instanceof Error && error.message === "PRODUCT_NOT_FOUND") return { ok: false, message: "محصول پیدا نشد" };
+    if (error instanceof Error && error.message === "STALE_VARIANTS") return { ok: false, message: "واریانت‌ها تغییر کرده‌اند؛ صفحه را تازه کنید" };
+    return mutationError(error);
+  }
 }
 
 export async function saveProductAction(input: ProductInput): Promise<MutationResult> {

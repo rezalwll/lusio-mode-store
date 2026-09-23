@@ -6,27 +6,23 @@ import { useMemo } from "react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { orderStatusClass, orderStatusLabels } from "@/lib/admin";
 import { formatNumber, formatToman, toFa } from "@/lib/format";
-import { useStore } from "@/store/use-store";
+import type { Customer, Order, Product, StoreSettings } from "@/types/store";
 
-export function AdminDashboardPage() {
-  const products = useStore((state) => state.products);
-  const orders = useStore((state) => state.orders);
-  const customers = useStore((state) => state.customers);
-  const settings = useStore((state) => state.settings);
+export function AdminDashboardPage({ products, orders, customers, settings, nowIso }: { products: Product[]; orders: Order[]; customers: Customer[]; settings: StoreSettings; nowIso: string }) {
   const sales = orders.filter((item) => item.status !== "cancelled").reduce((sum, item) => sum + item.total, 0);
   const lowStock = products.filter((item) => item.active && item.stock <= (settings.lowStockThreshold ?? 5)).length;
-  const todayOrders = orders.filter((item) => item.createdAt.slice(0, 10) === new Date().toISOString().slice(0, 10)).length;
-  const dateLabel = useMemo(() => new Intl.DateTimeFormat("fa-IR", { weekday: "long", day: "numeric", month: "long" }).format(new Date()), []);
+  const todayOrders = orders.filter((item) => item.createdAt.slice(0, 10) === nowIso.slice(0, 10)).length;
+  const dateLabel = useMemo(() => new Intl.DateTimeFormat("fa-IR", { weekday: "long", day: "numeric", month: "long" }).format(new Date(nowIso)), [nowIso]);
   const salesTrend = useMemo(() => Array.from({ length: 7 }, (_, index) => {
-    const date = new Date();
+    const date = new Date(nowIso);
     date.setDate(date.getDate() - (6 - index));
     const key = date.toISOString().slice(0, 10);
     return {
       day: new Intl.DateTimeFormat("fa-IR", { weekday: "short" }).format(date),
       sales: orders.filter((item) => item.status !== "cancelled" && item.createdAt.slice(0, 10) === key).reduce((sum, item) => sum + item.total, 0),
     };
-  }), [orders]);
-  const now = new Date();
+  }), [orders, nowIso]);
+  const now = new Date(nowIso);
   const monthSales = orders.filter((item) => { const date = new Date(item.createdAt); return item.status !== "cancelled" && date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth(); }).reduce((sum, item) => sum + item.total, 0);
   const target = settings.monthlySalesTarget ?? 500_000_000;
   const targetProgress = target > 0 ? Math.min(100, Math.round((monthSales / target) * 100)) : 0;
