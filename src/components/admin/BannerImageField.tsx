@@ -5,7 +5,8 @@ import { useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Field";
-import { compressImageFile } from "@/lib/image";
+import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
+import { uploadMedia } from "@/lib/media-client";
 import { cn } from "@/lib/utils";
 
 export function BannerImageField({
@@ -29,9 +30,9 @@ export function BannerImageField({
     if (!file) return;
     setBusy(true);
     try {
-      const image = await compressImageFile(file, mobile ? 1400 : 2200);
-      onChange(image);
-      toast.success(`${label} آپلود و بهینه شد`);
+      const asset = await uploadMedia(file);
+      onChange(asset.publicUrl);
+      toast.success(`${label} آپلود و ذخیره شد`);
     } catch (uploadError) {
       toast.error(uploadError instanceof Error ? uploadError.message : "آپلود تصویر انجام نشد");
     } finally {
@@ -63,9 +64,9 @@ export function BannerImageField({
         <div className="absolute inset-0 grid place-items-center bg-black/40 opacity-0 transition group-hover:opacity-100 group-focus-within:opacity-100">
           <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => inputRef.current?.click()}>{busy ? <LoaderCircle className="size-4 animate-spin" /> : <UploadCloud className="size-4" />}{busy ? "در حال آماده‌سازی" : "تعویض تصویر"}</Button>
         </div>
-        <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={choose} hidden />
+        <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp,image/avif" onChange={choose} hidden />
       </div>
-      <div className="relative mt-2"><LinkIcon className="absolute right-3 top-1/2 size-3.5 -translate-y-1/2 text-muted" /><Input value={value.startsWith("data:") ? "" : value} onChange={(event) => onChange(event.target.value)} dir="ltr" className="pr-9 text-[9px]" placeholder={value.startsWith("data:") ? "تصویر از دستگاه آپلود شده؛ برای جایگزینی لینک را وارد کنید" : "یا نشانی تصویر را وارد کنید..."} /></div>
+      <div className="mt-2 flex gap-2"><div className="relative flex-1"><LinkIcon className="absolute right-3 top-1/2 size-3.5 -translate-y-1/2 text-muted" /><Input value={value} onChange={(event) => onChange(event.target.value)} dir="ltr" className="pr-9 text-[9px]" placeholder="یا نشانی تصویر را وارد کنید..." /></div><MediaLibraryPicker onSelect={onChange} /></div>
       {error && <span className="mt-1.5 block text-[10px] font-medium text-rose-600">{error}</span>}
     </div>
   );

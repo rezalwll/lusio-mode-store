@@ -5,8 +5,9 @@ import { useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Field";
+import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
 import { productPlaceholderUrl } from "@/lib/assets";
-import { compressImageFile } from "@/lib/image";
+import { uploadMedia } from "@/lib/media-client";
 
 const MAX_IMAGES = 8;
 export function ProductImageManager({ images, onChange }: { images: string[]; onChange: (images: string[]) => void }) {
@@ -21,9 +22,9 @@ export function ProductImageManager({ images, onChange }: { images: string[]; on
     setBusy(true);
     try {
       const selected = Array.from(files).slice(0, available);
-      const compressed = await Promise.all(selected.map((file) => compressImageFile(file)));
-      onChange([...images, ...compressed]);
-      toast.success(`${compressed.length} تصویر آپلود و بهینه شد`);
+      const uploaded = await Promise.all(selected.map((file) => uploadMedia(file)));
+      onChange([...images, ...uploaded.map((asset) => asset.publicUrl)]);
+      toast.success(`${uploaded.length} تصویر آپلود و ذخیره شد`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "آپلود تصویر انجام نشد");
     } finally {
@@ -63,11 +64,11 @@ export function ProductImageManager({ images, onChange }: { images: string[]; on
         onDrop={drop}
         className={`grid min-h-32 place-items-center border border-dashed p-5 text-center transition ${dragging ? "border-brand bg-rose-50" : "border-border bg-stone-50"}`}
       >
-        <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={handleFiles} />
+        <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple className="hidden" onChange={handleFiles} />
         <div>
           {busy ? <LoaderCircle className="mx-auto size-7 animate-spin text-brand" /> : <UploadCloud className="mx-auto size-7 text-muted" />}
           <p className="mt-2 text-[10px] font-black">فایل‌ها را اینجا رها کنید یا از دستگاه انتخاب کنید</p>
-          <p className="mt-1 text-[8px] leading-5 text-muted">JPG، PNG یا WebP · بهینه‌سازی خودکار · حداکثر ۸ مگابایت</p>
+          <p className="mt-1 text-[8px] leading-5 text-muted">JPG، PNG، WebP یا AVIF · ذخیره ماندگار · حداکثر ۸ مگابایت</p>
           <Button type="button" size="sm" variant="outline" className="mt-3" disabled={busy || images.length >= MAX_IMAGES} onClick={() => inputRef.current?.click()}><ImagePlus className="size-3.5" />انتخاب تصویر</Button>
         </div>
       </div>
@@ -75,6 +76,7 @@ export function ProductImageManager({ images, onChange }: { images: string[]; on
       <div className="mt-3 flex gap-2">
         <Input value={url} onChange={(event) => setUrl(event.target.value)} dir="ltr" placeholder="https://..." />
         <Button type="button" variant="outline" onClick={addUrl} disabled={!url.trim()}><LinkIcon className="size-4" />افزودن لینک</Button>
+        <MediaLibraryPicker disabled={images.length >= MAX_IMAGES} onSelect={(image) => { if (!images.includes(image)) onChange([...images, image]); }} />
       </div>
 
       {images.length > 0 && (

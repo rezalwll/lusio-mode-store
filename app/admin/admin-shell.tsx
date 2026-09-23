@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, ChartNoAxesCombined, ChevronLeft, LayoutDashboard, ListTree, LogOut, Menu, Package, Palette, Percent, Search, Settings, ShoppingCart, Store, Tags, Users, X } from "lucide-react";
+import { Bell, ChartNoAxesCombined, ChevronLeft, Images, LayoutDashboard, ListTree, LogOut, Menu, Package, Palette, Percent, Search, Settings, ShoppingCart, Store, Tags, Users, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { logoUrl } from "@/lib/assets";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,7 @@ const navigation = [
   { label: "داشبورد", to: "/admin", icon: LayoutDashboard, exact: true },
   { label: "سفارش‌ها", to: "/admin/orders", icon: ShoppingCart, exact: false },
   { label: "محصولات", to: "/admin/products", icon: Package, exact: false },
+  { label: "رسانه‌ها", to: "/admin/media", icon: Images, exact: false },
   { label: "مشتریان", to: "/admin/customers", icon: Users, exact: false },
   { label: "دسته‌بندی‌ها", to: "/admin/categories", icon: Tags, exact: false },
   { label: "کدهای تخفیف", to: "/admin/coupons", icon: Percent, exact: false },
