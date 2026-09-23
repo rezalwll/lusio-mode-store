@@ -1,6 +1,6 @@
 import "server-only";
 
-import { desc } from "drizzle-orm";
+import { desc, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db/client";
 import { coupons, orderItems, orders } from "@/db/schema";
 import { rialToToman } from "@/lib/structured-data";
@@ -19,12 +19,13 @@ function paymentStatus(value: string): PaymentStatus {
   return value as PaymentStatus;
 }
 
-export async function getOrders(): Promise<Order[]> {
+export async function getOrders(customerId?: number): Promise<Order[]> {
   const db = getDb();
-  const [orderRows, itemRows] = await Promise.all([
-    db.select().from(orders).orderBy(desc(orders.createdAt)),
-    db.select().from(orderItems),
-  ]);
+  const orderRows = customerId === undefined
+    ? await db.select().from(orders).orderBy(desc(orders.createdAt))
+    : await db.select().from(orders).where(eq(orders.customerId, customerId)).orderBy(desc(orders.createdAt));
+  const orderIds = orderRows.map((order) => order.id);
+  const itemRows = orderIds.length ? await db.select().from(orderItems).where(inArray(orderItems.orderId, orderIds)) : [];
   const itemsByOrder = new Map<string, typeof itemRows>();
   for (const item of itemRows) {
     const list = itemsByOrder.get(item.orderId) ?? [];
@@ -76,4 +77,3 @@ export async function getCoupons(): Promise<Coupon[]> {
     active: coupon.active,
   }));
 }
-

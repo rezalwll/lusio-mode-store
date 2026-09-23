@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { TrackingView } from "./tracking-view";
+import { TrackingPage } from "@/views/store/TrackingPage";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
-export default function TrackingRoutePage() {
-  return <TrackingView />;
+export default async function TrackingRoutePage({ searchParams }: { searchParams: Promise<{ order?: string; token?: string }> }) {
+  const search = await searchParams;
+  return <TrackingPage initialOrder={search.order ?? ""} initialToken={search.token ?? ""} />;
 }
