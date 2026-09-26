@@ -1,13 +1,15 @@
 import { eq } from "drizzle-orm";
 import { NextResponse, type NextRequest } from "next/server";
 import { getDb } from "@/db/client";
-import { categories, mediaAssets, productImages, storeSettings } from "@/db/schema";
+import { adminAuditLogs, categories, mediaAssets, productImages, storeSettings } from "@/db/schema";
+import { adminAuditValues, createAdminAuditContext } from "@/server/audit/admin-audit";
 import { requireAdmin } from "@/server/auth/admin-session";
 import { processUploadedImage } from "@/server/media/images";
 import { getMediaStorage } from "@/server/media/storage";
 import { getMediaAssets } from "@/server/media/queries";
 import { assertSameOrigin } from "@/server/security/origin";
 import { consumeRateLimit } from "@/server/security/rate-limit";
+import { logServer } from "@/server/observability/logger";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,6 +22,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   await assertSameOrigin();
   const user = await requireAdmin(["owner", "admin", "editor"]);
+  const audit = await createAdminAuditContext(user);
   const limit = await consumeRateLimit(`media-upload:${user.id}`, 40, 60_000);
   if (!limit.allowed) return NextResponse.json({ error: "تعداد آپلودها بیش از حد مجاز است" }, { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } });
 
@@ -30,28 +33,33 @@ export async function POST(request: NextRequest) {
     const image = await processUploadedImage(file);
     const stored = await getMediaStorage().put(image.buffer, image.contentType);
     try {
-      const [asset] = await getDb().insert(mediaAssets).values({
-        ...stored,
-        contentType: image.contentType,
-        sizeBytes: image.buffer.byteLength,
-        width: image.width,
-        height: image.height,
-        altText: file.name.replace(/\.[^.]+$/, "").slice(0, 240),
-      }).returning();
+      const asset = await getDb().transaction(async (tx) => {
+        const [created] = await tx.insert(mediaAssets).values({
+          ...stored,
+          contentType: image.contentType,
+          sizeBytes: image.buffer.byteLength,
+          width: image.width,
+          height: image.height,
+          altText: file.name.replace(/\.[^.]+$/, "").slice(0, 240),
+        }).returning();
+        await tx.insert(adminAuditLogs).values(adminAuditValues(audit, { action: "media.upload", entityType: "media", entityId: created.id, metadata: { contentType: image.contentType, sizeBytes: image.buffer.byteLength } }));
+        return created;
+      });
       return NextResponse.json({ asset }, { status: 201 });
     } catch (error) {
       await getMediaStorage().delete(stored.objectKey);
       throw error;
     }
   } catch (error) {
-    console.error("media upload failed", error);
+    logServer("error", "media.upload.failed", "Media upload failed", { correlationId: audit.correlationId, actorId: user.id }, error);
     return NextResponse.json({ error: error instanceof Error ? error.message : "آپلود تصویر انجام نشد" }, { status: 400 });
   }
 }
 
 export async function DELETE(request: NextRequest) {
   await assertSameOrigin();
-  await requireAdmin(["owner", "admin", "editor"]);
+  const user = await requireAdmin(["owner", "admin", "editor"]);
+  const audit = await createAdminAuditContext(user);
   const id = request.nextUrl.searchParams.get("id");
   if (!id) return NextResponse.json({ error: "شناسه رسانه لازم است" }, { status: 400 });
 
@@ -70,10 +78,13 @@ export async function DELETE(request: NextRequest) {
 
   try {
     await getMediaStorage().delete(asset.objectKey);
-    await getDb().delete(mediaAssets).where(eq(mediaAssets.id, asset.id));
+    await getDb().transaction(async (tx) => {
+      await tx.delete(mediaAssets).where(eq(mediaAssets.id, asset.id));
+      await tx.insert(adminAuditLogs).values(adminAuditValues(audit, { action: "media.delete", entityType: "media", entityId: asset.id }));
+    });
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("media delete failed", error);
+    logServer("error", "media.delete.failed", "Media delete failed", { correlationId: audit.correlationId, actorId: user.id, mediaId: id }, error);
     return NextResponse.json({ error: "حذف رسانه انجام نشد" }, { status: 500 });
   }
 }

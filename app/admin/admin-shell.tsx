@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, ChartNoAxesCombined, ChevronLeft, Images, LayoutDashboard, ListTree, LogOut, Menu, Package, Palette, Percent, Search, Settings, ShoppingCart, Store, Tags, Warehouse, Users, X } from "lucide-react";
+import { Activity, Bell, ChartNoAxesCombined, ChevronLeft, Images, LayoutDashboard, ListTree, LogOut, Menu, Package, Palette, Percent, Search, Settings, ShoppingCart, Store, Tags, Warehouse, Users, X } from "lucide-react";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { logoUrl } from "@/lib/assets";
 import { cn } from "@/lib/utils";
@@ -23,14 +23,15 @@ const navigation = [
   { label: "ظاهر و محتوا", to: "/admin/appearance", icon: Palette, exact: false },
   { label: "منو و چیدمان", to: "/admin/navigation", icon: ListTree, exact: false },
   { label: "تنظیمات و محتوا", to: "/admin/settings", icon: Settings, exact: false },
+  { label: "گزارش فعالیت", to: "/admin/activity", icon: Activity, exact: false, privileged: true },
 ] as const;
 
-function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+function Sidebar({ user, onNavigate }: { user: AdminSessionUser; onNavigate?: () => void }) {
   const pathname = usePathname();
   return (
     <div className="flex h-full flex-col bg-[#181818] text-white">
       <div className="flex h-19 items-center border-b border-white/8 px-5"><span className="relative block h-12 w-36"><Image src={logoUrl} alt="ELEVEN" fill sizes="144px" className="object-contain brightness-0 invert" /></span><span className="mr-auto rounded-full bg-white/8 px-2 py-1 text-[8px] text-white/45">ADMIN</span></div>
-      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-5"><p className="mb-3 px-3 text-[9px] font-bold text-white/30">مدیریت فروشگاه</p>{navigation.map((item) => {
+      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-5"><p className="mb-3 px-3 text-[9px] font-bold text-white/30">مدیریت فروشگاه</p>{navigation.filter((item) => !("privileged" in item && item.privileged) || ["owner", "admin"].includes(user.role)).map((item) => {
         const active = item.exact ? pathname === item.to : pathname === item.to || pathname.startsWith(`${item.to}/`);
         return <Link key={item.to} href={item.to} onClick={onNavigate} className={cn("flex h-11 items-center gap-3 rounded-xl px-3 text-[11px] font-medium text-white/58 transition hover:bg-white/8 hover:text-white", active && "!bg-white !text-ink shadow-sm")}><item.icon className="size-4.5" /><span>{item.label}</span></Link>;
       })}</nav>
@@ -56,8 +57,8 @@ export function AdminShell({ children, user }: { children: ReactNode; user: Admi
 
   return (
     <div className="min-h-screen bg-[#f5f5f2] text-ink lg:grid lg:grid-cols-[252px_1fr]">
-      <aside className="fixed inset-y-0 right-0 z-50 hidden w-[252px] lg:block"><Sidebar /></aside>
-      <div className={cn("fixed inset-0 z-60 bg-black/50 transition lg:hidden", menuOpen ? "opacity-100" : "pointer-events-none opacity-0")} onClick={() => setMenuOpen(false)}><aside className={cn("relative h-full w-[290px] max-w-[86vw] transition-transform duration-300", menuOpen ? "translate-x-0" : "translate-x-full")} onClick={(event) => event.stopPropagation()}><button type="button" className="absolute left-3 top-5 z-10 grid size-8 place-items-center rounded-full bg-white/8 text-white" onClick={() => setMenuOpen(false)}><X className="size-4" /></button><Sidebar onNavigate={() => setMenuOpen(false)} /></aside></div>
+      <aside className="fixed inset-y-0 right-0 z-50 hidden w-[252px] lg:block"><Sidebar user={user} /></aside>
+      <div className={cn("fixed inset-0 z-60 bg-black/50 transition lg:hidden", menuOpen ? "opacity-100" : "pointer-events-none opacity-0")} onClick={() => setMenuOpen(false)}><aside className={cn("relative h-full w-[290px] max-w-[86vw] transition-transform duration-300", menuOpen ? "translate-x-0" : "translate-x-full")} onClick={(event) => event.stopPropagation()}><button type="button" className="absolute left-3 top-5 z-10 grid size-8 place-items-center rounded-full bg-white/8 text-white" onClick={() => setMenuOpen(false)}><X className="size-4" /></button><Sidebar user={user} onNavigate={() => setMenuOpen(false)} /></aside></div>
       <div className="min-w-0 lg:col-start-2">
         <header className="sticky top-0 z-40 flex h-19 items-center gap-3 border-b border-black/5 bg-white/92 px-4 backdrop-blur-xl sm:px-6 lg:px-8">
           <button type="button" onClick={() => setMenuOpen(true)} className="grid size-10 place-items-center rounded-xl border border-border lg:hidden"><Menu className="size-5" /></button>

@@ -4,7 +4,8 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getDb } from "@/db/client";
-import { customers, customerSessions } from "@/db/schema";
+import { adminAuditLogs, customers, customerSessions } from "@/db/schema";
+import { adminAuditValues, createAdminAuditContext } from "@/server/audit/admin-audit";
 import { requireAdmin } from "@/server/auth/admin-session";
 import { assertSameOrigin } from "@/server/security/origin";
 import { normalizeIranPhone } from "@/server/validation/checkout";
@@ -14,7 +15,8 @@ type Result = { ok: true } | { ok: false; message: string };
 
 export async function saveCustomerAction(input: unknown): Promise<Result> {
   await assertSameOrigin();
-  await requireAdmin(["owner", "admin", "staff"]);
+  const actor = await requireAdmin(["owner", "admin", "staff"]);
+  const audit = await createAdminAuditContext(actor);
   const parsed = inputSchema.safeParse(input);
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "اطلاعات مشتری معتبر نیست" };
   try {
@@ -23,6 +25,7 @@ export async function saveCustomerAction(input: unknown): Promise<Result> {
       if (!current) throw new Error("NOT_FOUND");
       await tx.update(customers).set({ name: parsed.data.name, phone: parsed.data.phone, email: parsed.data.email || null, city: parsed.data.city, active: parsed.data.active, updatedAt: new Date() }).where(eq(customers.id, current.id));
       if (!parsed.data.active) await tx.delete(customerSessions).where(eq(customerSessions.customerId, current.id));
+      await tx.insert(adminAuditLogs).values(adminAuditValues(audit, { action: "customer.update", entityType: "customer", entityId: current.id, metadata: { activeBefore: current.active, activeAfter: parsed.data.active } }));
     });
     revalidatePath("/admin/customers");
     return { ok: true };

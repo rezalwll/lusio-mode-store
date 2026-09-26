@@ -3,7 +3,8 @@
 import { eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getDb } from "@/db/client";
-import { orderItems, orders, products, productVariants } from "@/db/schema";
+import { adminAuditLogs, orderItems, orders, products, productVariants } from "@/db/schema";
+import { adminAuditValues, createAdminAuditContext } from "@/server/audit/admin-audit";
 import { requireAdmin } from "@/server/auth/admin-session";
 import { notifyOrderStatusChanged } from "@/server/messaging/service";
 import { logServer } from "@/server/observability/logger";
@@ -16,7 +17,8 @@ type Result = { ok: true } | { ok: false; message: string };
 
 export async function updateOrderAction(input: Input): Promise<Result> {
   await assertSameOrigin();
-  await requireAdmin(["owner", "admin", "staff"]);
+  const actor = await requireAdmin(["owner", "admin", "staff"]);
+  const audit = await createAdminAuditContext(actor);
   const parsed = orderUpdateSchema.safeParse(input);
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "اطلاعات سفارش معتبر نیست" };
   try {
@@ -38,6 +40,17 @@ export async function updateOrderAction(input: Input): Promise<Result> {
         ...(parsed.data.internalNote !== undefined ? { internalNote: parsed.data.internalNote || null } : {}),
         updatedAt: new Date(),
       }).where(eq(orders.id, current.id));
+      await tx.insert(adminAuditLogs).values(adminAuditValues(audit, {
+        action: "order.update",
+        entityType: "order",
+        entityId: current.id,
+        metadata: {
+          previousStatus: current.status,
+          nextStatus: parsed.data.status ?? current.status,
+          trackingChanged: parsed.data.trackingCode !== undefined && parsed.data.trackingCode !== (current.trackingCode ?? ""),
+          noteChanged: parsed.data.internalNote !== undefined && parsed.data.internalNote !== (current.internalNote ?? ""),
+        },
+      }));
       if (parsed.data.status && parsed.data.status !== current.status) {
         notification = { customerId: current.customerId ?? undefined, phone: current.phone, orderId: current.id, status: parsed.data.status, trackingCode: parsed.data.trackingCode || current.trackingCode || undefined };
       }

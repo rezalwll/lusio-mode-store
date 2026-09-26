@@ -3,7 +3,8 @@
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getDb } from "@/db/client";
-import { coupons } from "@/db/schema";
+import { adminAuditLogs, coupons } from "@/db/schema";
+import { adminAuditValues, createAdminAuditContext } from "@/server/audit/admin-audit";
 import { tomanToRial } from "@/lib/structured-data";
 import { requireAdmin } from "@/server/auth/admin-session";
 import { assertSameOrigin } from "@/server/security/origin";
@@ -14,7 +15,8 @@ type Result = { ok: true; id: number } | { ok: false; message: string };
 
 export async function saveCouponAction(input: Omit<Coupon, "used" | "id"> & { id?: number }): Promise<Result> {
   await assertSameOrigin();
-  await requireAdmin(["owner", "admin", "editor"]);
+  const actor = await requireAdmin(["owner", "admin", "editor"]);
+  const audit = await createAdminAuditContext(actor);
   const parsed = couponInputSchema.safeParse(input);
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "اطلاعات کد تخفیف معتبر نیست" };
   try {
@@ -29,9 +31,13 @@ export async function saveCouponAction(input: Omit<Coupon, "used" | "id"> & { id
       active: parsed.data.active,
       updatedAt: new Date(),
     };
-    const [coupon] = parsed.data.id
-      ? await getDb().update(coupons).set(values).where(eq(coupons.id, parsed.data.id)).returning({ id: coupons.id })
-      : await getDb().insert(coupons).values(values).returning({ id: coupons.id });
+    const coupon = await getDb().transaction(async (tx) => {
+      const [saved] = parsed.data.id
+        ? await tx.update(coupons).set(values).where(eq(coupons.id, parsed.data.id)).returning({ id: coupons.id })
+        : await tx.insert(coupons).values(values).returning({ id: coupons.id });
+      if (saved) await tx.insert(adminAuditLogs).values(adminAuditValues(audit, { action: parsed.data.id ? "coupon.update" : "coupon.create", entityType: "coupon", entityId: saved.id }));
+      return saved;
+    });
     if (!coupon) return { ok: false, message: "کد تخفیف پیدا نشد" };
     revalidatePath("/admin/coupons");
     return { ok: true, id: coupon.id };
@@ -45,9 +51,14 @@ export async function saveCouponAction(input: Omit<Coupon, "used" | "id"> & { id
 
 export async function archiveCouponAction(id: number): Promise<Result> {
   await assertSameOrigin();
-  await requireAdmin(["owner", "admin", "editor"]);
+  const actor = await requireAdmin(["owner", "admin", "editor"]);
+  const audit = await createAdminAuditContext(actor);
   if (!Number.isSafeInteger(id) || id <= 0) return { ok: false, message: "کد تخفیف معتبر نیست" };
-  const [coupon] = await getDb().update(coupons).set({ active: false, updatedAt: new Date() }).where(eq(coupons.id, id)).returning({ id: coupons.id });
+  const coupon = await getDb().transaction(async (tx) => {
+    const [archived] = await tx.update(coupons).set({ active: false, updatedAt: new Date() }).where(eq(coupons.id, id)).returning({ id: coupons.id });
+    if (archived) await tx.insert(adminAuditLogs).values(adminAuditValues(audit, { action: "coupon.archive", entityType: "coupon", entityId: id }));
+    return archived;
+  });
   if (!coupon) return { ok: false, message: "کد تخفیف پیدا نشد" };
   revalidatePath("/admin/coupons");
   return { ok: true, id: coupon.id };

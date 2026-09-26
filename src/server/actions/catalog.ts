@@ -3,7 +3,8 @@
 import { and, eq, inArray, max, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getDb } from "@/db/client";
-import { categories, productCategories, productImages, products, productVariants } from "@/db/schema";
+import { adminAuditLogs, categories, productCategories, productImages, products, productVariants } from "@/db/schema";
+import { adminAuditValues, createAdminAuditContext } from "@/server/audit/admin-audit";
 import { tomanToRial } from "@/lib/structured-data";
 import { requireAdmin } from "@/server/auth/admin-session";
 import { assertSameOrigin } from "@/server/security/origin";
@@ -28,7 +29,8 @@ function refreshCatalog() {
 
 export async function updateInventoryAction(input: InventoryInput): Promise<MutationResult> {
   await assertSameOrigin();
-  await requireAdmin(["owner", "admin", "editor"]);
+  const actor = await requireAdmin(["owner", "admin", "editor"]);
+  const audit = await createAdminAuditContext(actor);
   const parsed = inventoryInputSchema.safeParse(input);
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "موجودی معتبر نیست" };
 
@@ -55,6 +57,7 @@ export async function updateInventoryAction(input: InventoryInput): Promise<Muta
         if (parsed.data.variants.length) throw new Error("STALE_VARIANTS");
         await tx.update(products).set({ stock: parsed.data.stock, updatedAt: new Date() }).where(eq(products.id, product.id));
       }
+      await tx.insert(adminAuditLogs).values(adminAuditValues(audit, { action: "inventory.update", entityType: "product", entityId: product.id, metadata: { variantCount: parsed.data.variants.length } }));
     });
     refreshCatalog();
     return { ok: true, id: parsed.data.productId };
@@ -67,7 +70,8 @@ export async function updateInventoryAction(input: InventoryInput): Promise<Muta
 
 export async function saveProductAction(input: ProductInput): Promise<MutationResult> {
   await assertSameOrigin();
-  await requireAdmin(["owner", "admin", "editor"]);
+  const actor = await requireAdmin(["owner", "admin", "editor"]);
+  const audit = await createAdminAuditContext(actor);
   const parsed = productInputSchema.safeParse(input);
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "اطلاعات محصول معتبر نیست" };
 
@@ -130,6 +134,7 @@ export async function saveProductAction(input: ProductInput): Promise<MutationRe
           stock: variant.stock,
         })));
       }
+      await tx.insert(adminAuditLogs).values(adminAuditValues(audit, { action: parsed.data.id ? "product.update" : "product.create", entityType: "product", entityId: productId, metadata: { status: parsed.data.status } }));
       return productId;
     });
     refreshCatalog();
@@ -141,10 +146,14 @@ export async function saveProductAction(input: ProductInput): Promise<MutationRe
 
 export async function archiveProductAction(id: number): Promise<MutationResult> {
   await assertSameOrigin();
-  await requireAdmin(["owner", "admin", "editor"]);
+  const actor = await requireAdmin(["owner", "admin", "editor"]);
+  const audit = await createAdminAuditContext(actor);
   if (!Number.isSafeInteger(id) || id <= 0) return { ok: false, message: "محصول معتبر نیست" };
   try {
-    await getDb().update(products).set({ status: "archived", active: false, updatedAt: new Date() }).where(eq(products.id, id));
+    await getDb().transaction(async (tx) => {
+      await tx.update(products).set({ status: "archived", active: false, updatedAt: new Date() }).where(eq(products.id, id));
+      await tx.insert(adminAuditLogs).values(adminAuditValues(audit, { action: "product.archive", entityType: "product", entityId: id }));
+    });
     refreshCatalog();
     return { ok: true, id };
   } catch (error) {
@@ -154,11 +163,15 @@ export async function archiveProductAction(id: number): Promise<MutationResult> 
 
 export async function bulkProductStatusAction(input: { ids: number[]; status: "published" | "draft" | "archived" }): Promise<MutationResult> {
   await assertSameOrigin();
-  await requireAdmin(["owner", "admin", "editor"]);
+  const actor = await requireAdmin(["owner", "admin", "editor"]);
+  const audit = await createAdminAuditContext(actor);
   const parsed = bulkProductStatusSchema.safeParse(input);
   if (!parsed.success) return { ok: false, message: "انتخاب محصولات معتبر نیست" };
   try {
-    await getDb().update(products).set({ status: parsed.data.status, active: parsed.data.status === "published", updatedAt: new Date() }).where(inArray(products.id, parsed.data.ids));
+    await getDb().transaction(async (tx) => {
+      await tx.update(products).set({ status: parsed.data.status, active: parsed.data.status === "published", updatedAt: new Date() }).where(inArray(products.id, parsed.data.ids));
+      await tx.insert(adminAuditLogs).values(adminAuditValues(audit, { action: "product.bulk_status", entityType: "product", metadata: { ids: parsed.data.ids, status: parsed.data.status } }));
+    });
     refreshCatalog();
     return { ok: true };
   } catch (error) {
@@ -168,7 +181,8 @@ export async function bulkProductStatusAction(input: { ids: number[]; status: "p
 
 export async function saveCategoryAction(input: CategoryInput): Promise<MutationResult> {
   await assertSameOrigin();
-  await requireAdmin(["owner", "admin", "editor"]);
+  const actor = await requireAdmin(["owner", "admin", "editor"]);
+  const audit = await createAdminAuditContext(actor);
   const parsed = categoryInputSchema.safeParse(input);
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "اطلاعات دسته‌بندی معتبر نیست" };
   if (parsed.data.id && parsed.data.parent === parsed.data.id) return { ok: false, message: "دسته‌بندی نمی‌تواند والد خودش باشد" };
@@ -212,6 +226,7 @@ export async function saveCategoryAction(input: CategoryInput): Promise<Mutation
       } else {
         await tx.insert(categories).values({ id: categoryId, ...values });
       }
+      await tx.insert(adminAuditLogs).values(adminAuditValues(audit, { action: parsed.data.id ? "category.update" : "category.create", entityType: "category", entityId: categoryId }));
       return categoryId;
     });
     refreshCatalog();
@@ -223,12 +238,16 @@ export async function saveCategoryAction(input: CategoryInput): Promise<Mutation
 
 export async function archiveCategoryAction(id: number): Promise<MutationResult> {
   await assertSameOrigin();
-  await requireAdmin(["owner", "admin", "editor"]);
+  const actor = await requireAdmin(["owner", "admin", "editor"]);
+  const audit = await createAdminAuditContext(actor);
   if (!Number.isSafeInteger(id) || id <= 0) return { ok: false, message: "دسته‌بندی معتبر نیست" };
   try {
     const [linked] = await getDb().select({ count: sql<number>`count(*)::int` }).from(productCategories).where(eq(productCategories.categoryId, id));
     if ((linked?.count ?? 0) > 0) return { ok: false, message: `این دسته‌بندی ${linked.count} محصول دارد و قابل بایگانی نیست` };
-    await getDb().update(categories).set({ active: false, updatedAt: new Date() }).where(eq(categories.id, id));
+    await getDb().transaction(async (tx) => {
+      await tx.update(categories).set({ active: false, updatedAt: new Date() }).where(eq(categories.id, id));
+      await tx.insert(adminAuditLogs).values(adminAuditValues(audit, { action: "category.archive", entityType: "category", entityId: id }));
+    });
     refreshCatalog();
     return { ok: true, id };
   } catch (error) {
