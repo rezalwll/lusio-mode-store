@@ -7,6 +7,7 @@ import { adminAuditLogs, coupons } from "@/db/schema";
 import { adminAuditValues, createAdminAuditContext } from "@/server/audit/admin-audit";
 import { tomanToRial } from "@/lib/structured-data";
 import { requireAdmin } from "@/server/auth/admin-session";
+import { logServer } from "@/server/observability/logger";
 import { assertSameOrigin } from "@/server/security/origin";
 import { couponInputSchema } from "@/server/validation/admin-commerce";
 import type { Coupon } from "@/types/store";
@@ -44,7 +45,7 @@ export async function saveCouponAction(input: Omit<Coupon, "used" | "id"> & { id
   } catch (error) {
     const code = typeof error === "object" && error !== null && "code" in error ? String(error.code) : "";
     if (code === "23505") return { ok: false, message: "این کد تخفیف قبلاً ساخته شده است" };
-    console.error("coupon mutation failed", error);
+    logServer("error", "coupon.mutation.failed", "Coupon mutation failed", {}, error);
     return { ok: false, message: "ذخیره کد تخفیف انجام نشد" };
   }
 }

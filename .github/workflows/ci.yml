@@ -47,7 +47,8 @@ jobs:
       ADMIN_BOOTSTRAP_PASSWORD: ci-only-password-1234
       ADMIN_BOOTSTRAP_NAME: مدیر تست
       SESSION_COOKIE_SECURE: "false"
-      OTP_PROVIDER: development
+      MESSAGE_PROVIDER: none
+      PAYMENT_PROVIDER: none
       OTP_HASH_SECRET: ci-only-otp-hash-secret-at-least-32-characters
     steps:
       - uses: actions/checkout@v5
@@ -94,6 +95,8 @@ jobs:
       # with `localhost`, drizzle-kit dies on connect without printing the
       # underlying ECONNREFUSED (verified locally against a closed port).
       DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/lusio_test
+      MESSAGE_PROVIDER: none
+      PAYMENT_PROVIDER: none
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
@@ -105,3 +108,5 @@ jobs:
       - run: npm run db:migrate
       - run: npm run db:seed
       - run: npm run test:db
+      - run: npm run maintenance
+      - run: npm run maintenance

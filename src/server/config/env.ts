@@ -36,6 +36,7 @@ export function getMessageEnvironment() {
   const provider = (process.env.MESSAGE_PROVIDER || process.env.OTP_PROVIDER || "development").trim().toLowerCase();
   if (!["development", "webhook", "none", "disabled"].includes(provider)) throw new Error(`Unsupported MESSAGE_PROVIDER: ${provider}`);
   if (process.env.NODE_ENV === "production" && provider === "development") throw new Error("Development message provider is disabled in production");
+  if (!["none", "disabled"].includes(provider) && (process.env.OTP_HASH_SECRET?.trim().length ?? 0) < 32) throw new Error("OTP_HASH_SECRET must contain at least 32 characters");
   if (provider === "webhook") {
     const webhookUrl = process.env.MESSAGE_WEBHOOK_URL?.trim() || process.env.OTP_WEBHOOK_URL?.trim();
     const webhookToken = process.env.MESSAGE_WEBHOOK_TOKEN?.trim() || process.env.OTP_WEBHOOK_TOKEN?.trim();

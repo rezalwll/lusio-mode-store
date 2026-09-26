@@ -7,6 +7,7 @@ import { adminAuditLogs, categories, productCategories, productImages, products,
 import { adminAuditValues, createAdminAuditContext } from "@/server/audit/admin-audit";
 import { tomanToRial } from "@/lib/structured-data";
 import { requireAdmin } from "@/server/auth/admin-session";
+import { logServer } from "@/server/observability/logger";
 import { assertSameOrigin } from "@/server/security/origin";
 import { bulkProductStatusSchema, categoryInputSchema, inventoryInputSchema, productInputSchema, type CategoryInput, type InventoryInput, type ProductInput } from "@/server/validation/catalog";
 
@@ -16,7 +17,7 @@ function mutationError(error: unknown): MutationResult {
   const code = typeof error === "object" && error !== null && "code" in error ? String(error.code) : "";
   if (code === "23505") return { ok: false, message: "نامک یا شناسه واردشده تکراری است" };
   if (code === "23503") return { ok: false, message: "این مورد به اطلاعات دیگری وابسته است و قابل تغییر نیست" };
-  console.error("catalog mutation failed", error);
+  logServer("error", "catalog.mutation.failed", "Catalog mutation failed", {}, error);
   return { ok: false, message: "ذخیره اطلاعات انجام نشد؛ دوباره تلاش کنید" };
 }
 

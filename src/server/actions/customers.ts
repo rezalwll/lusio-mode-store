@@ -7,6 +7,7 @@ import { getDb } from "@/db/client";
 import { adminAuditLogs, customers, customerSessions } from "@/db/schema";
 import { adminAuditValues, createAdminAuditContext } from "@/server/audit/admin-audit";
 import { requireAdmin } from "@/server/auth/admin-session";
+import { logServer } from "@/server/observability/logger";
 import { assertSameOrigin } from "@/server/security/origin";
 import { normalizeIranPhone } from "@/server/validation/checkout";
 
@@ -33,7 +34,7 @@ export async function saveCustomerAction(input: unknown): Promise<Result> {
     if (error instanceof Error && error.message === "NOT_FOUND") return { ok: false, message: "مشتری پیدا نشد" };
     const code = typeof error === "object" && error !== null && "code" in error ? String(error.code) : "";
     if (code === "23505") return { ok: false, message: "شماره موبایل یا ایمیل قبلاً ثبت شده است" };
-    console.error("customer update failed", error);
+    logServer("error", "customer.update.failed", "Customer update failed", { customerId: parsed.data.id }, error);
     return { ok: false, message: "ذخیره مشتری انجام نشد" };
   }
 }

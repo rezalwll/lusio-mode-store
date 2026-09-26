@@ -10,6 +10,7 @@ import { adminAuditValues, createAdminAuditContext } from "@/server/audit/admin-
 import { assertSameOrigin } from "@/server/security/origin";
 import { consumeRateLimit } from "@/server/security/rate-limit";
 import { getRequestSource } from "@/server/security/request-source";
+import { logServer } from "@/server/observability/logger";
 import { createAdminSession, destroyAdminSession, getAdminSession } from "./admin-session";
 
 const loginSchema = z.object({
@@ -35,6 +36,7 @@ export async function loginAdminAction(_previous: AdminLoginState, formData: For
   if (!valid || !user) {
     const audit = await createAdminAuditContext({ email: parsed.data.email });
     await getDb().insert(adminAuditLogs).values(adminAuditValues(audit, { action: "auth.login_failed", entityType: "admin_auth" }));
+    logServer("warn", "auth.admin.login_failed", "Admin login failed", { correlationId: audit.correlationId, source });
     return { error: "ایمیل یا رمز عبور صحیح نیست." };
   }
 
@@ -44,6 +46,7 @@ export async function loginAdminAction(_previous: AdminLoginState, formData: For
     await tx.update(adminUsers).set({ lastLoginAt: new Date() }).where(eq(adminUsers.id, user.id));
     await tx.insert(adminAuditLogs).values(adminAuditValues(audit, { action: "auth.login_success", entityType: "admin_auth", entityId: user.id }));
   });
+  logServer("info", "auth.admin.login_success", "Admin login succeeded", { correlationId: audit.correlationId, actorId: user.id, source });
   redirect(parsed.data.next);
 }
 

@@ -5,6 +5,8 @@ import { and, eq, gt, isNull } from "drizzle-orm";
 import { getDb } from "@/db/client";
 import { customerOtpChallenges, customers } from "@/db/schema";
 import { sendOtpMessage } from "@/server/messaging/service";
+import { createCorrelationId } from "@/server/observability/correlation";
+import { logServer } from "@/server/observability/logger";
 import { assertSameOrigin } from "@/server/security/origin";
 import { consumeRateLimit } from "@/server/security/rate-limit";
 import { getRequestSource } from "@/server/security/request-source";
@@ -28,7 +30,9 @@ export async function requestCustomerOtpAction(input: { phone: string }): Promis
   await assertSameOrigin();
   const phone = normalizeIranPhone(input.phone);
   if (!/^09\d{9}$/.test(phone)) return { ok: false, message: "شماره موبایل معتبر نیست" };
-  const limit = await consumeRateLimit(`customer-otp-request:${await getRequestSource()}:${phone}`, 3, 10 * 60 * 1000);
+  const source = await getRequestSource();
+  const correlationId = createCorrelationId();
+  const limit = await consumeRateLimit(`customer-otp-request:${source}:${phone}`, 3, 10 * 60 * 1000);
   if (!limit.allowed) return { ok: false, message: `درخواست‌های ورود بیش از حد است؛ ${limit.retryAfterSeconds} ثانیه دیگر تلاش کنید.` };
   const challengeId = randomUUID();
   const code = String(randomInt(100_000, 1_000_000));
@@ -39,7 +43,7 @@ export async function requestCustomerOtpAction(input: { phone: string }): Promis
     return { ok: true, challengeId };
   } catch (error) {
     await getDb().delete(customerOtpChallenges).where(eq(customerOtpChallenges.id, challengeId)).catch(() => undefined);
-    console.error("OTP delivery failed", error);
+    logServer("error", "auth.otp.delivery_failed", "OTP delivery failed", { correlationId, source }, error);
     return { ok: false, message: "ارسال کد ورود انجام نشد؛ تنظیمات پیامک را بررسی کنید" };
   }
 }
