@@ -67,6 +67,15 @@ export interface Order {
   total: number;
   status: OrderStatus;
   paymentStatus: PaymentStatus;
+  paymentAttempt?: {
+    provider: string;
+    status: string;
+    authority?: string;
+    transactionId?: string;
+    failureMessage?: string;
+    createdAt: string;
+    verifiedAt?: string;
+  };
   shippingMethod: string;
   trackingCode?: string;
   internalNote?: string;

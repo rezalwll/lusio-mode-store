@@ -16,8 +16,6 @@ export const couponInputSchema = z.object({
 export const orderUpdateSchema = z.object({
   id: z.string().min(8).max(80),
   status: z.enum(["pending", "processing", "shipped", "delivered", "cancelled"]).optional(),
-  paymentStatus: z.enum(["pending", "paid", "refunded", "failed"]).optional(),
   trackingCode: z.string().trim().max(160).optional(),
   internalNote: z.string().trim().max(2_000).optional(),
 });
-

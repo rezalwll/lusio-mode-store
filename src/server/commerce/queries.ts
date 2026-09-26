@@ -2,7 +2,7 @@ import "server-only";
 
 import { desc, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db/client";
-import { coupons, customers, orderItems, orders } from "@/db/schema";
+import { coupons, customers, orderItems, orders, paymentAttempts } from "@/db/schema";
 import { rialToToman } from "@/lib/structured-data";
 import type { Coupon, Customer, Order, OrderStatus, PaymentStatus } from "@/types/store";
 
@@ -25,12 +25,19 @@ export async function getOrders(customerId?: number): Promise<Order[]> {
     ? await db.select().from(orders).orderBy(desc(orders.createdAt))
     : await db.select().from(orders).where(eq(orders.customerId, customerId)).orderBy(desc(orders.createdAt));
   const orderIds = orderRows.map((order) => order.id);
-  const itemRows = orderIds.length ? await db.select().from(orderItems).where(inArray(orderItems.orderId, orderIds)) : [];
+  const [itemRows, attemptRows] = await Promise.all([
+    orderIds.length ? db.select().from(orderItems).where(inArray(orderItems.orderId, orderIds)) : [],
+    orderIds.length ? db.select().from(paymentAttempts).where(inArray(paymentAttempts.orderId, orderIds)).orderBy(desc(paymentAttempts.createdAt)) : [],
+  ]);
   const itemsByOrder = new Map<string, typeof itemRows>();
   for (const item of itemRows) {
     const list = itemsByOrder.get(item.orderId) ?? [];
     list.push(item);
     itemsByOrder.set(item.orderId, list);
+  }
+  const latestAttemptByOrder = new Map<string, (typeof attemptRows)[number]>();
+  for (const attempt of attemptRows) {
+    if (!latestAttemptByOrder.has(attempt.orderId)) latestAttemptByOrder.set(attempt.orderId, attempt);
   }
   return orderRows.map((order): Order => ({
     id: order.id,
@@ -49,6 +56,18 @@ export async function getOrders(customerId?: number): Promise<Order[]> {
     couponCode: order.couponCode ?? undefined,
     status: orderStatus(order.status),
     paymentStatus: paymentStatus(order.paymentStatus),
+    paymentAttempt: (() => {
+      const attempt = latestAttemptByOrder.get(order.id);
+      return attempt ? {
+        provider: attempt.providerKey,
+        status: attempt.status,
+        authority: attempt.providerAuthority ?? undefined,
+        transactionId: attempt.providerTransactionId ?? undefined,
+        failureMessage: attempt.failureMessage ?? undefined,
+        createdAt: attempt.createdAt.toISOString(),
+        verifiedAt: attempt.verifiedAt?.toISOString(),
+      } : undefined;
+    })(),
     shippingMethod: order.shippingMethod,
     trackingCode: order.trackingCode ?? undefined,
     internalNote: order.internalNote ?? undefined,
