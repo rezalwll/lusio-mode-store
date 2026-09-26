@@ -20,7 +20,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   await assertSameOrigin();
   const user = await requireAdmin(["owner", "admin", "editor"]);
-  const limit = consumeRateLimit(`media-upload:${user.id}`, 40, 60_000);
+  const limit = await consumeRateLimit(`media-upload:${user.id}`, 40, 60_000);
   if (!limit.allowed) return NextResponse.json({ error: "تعداد آپلودها بیش از حد مجاز است" }, { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } });
 
   try {

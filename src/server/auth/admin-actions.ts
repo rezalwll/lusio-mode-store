@@ -2,13 +2,13 @@
 
 import { compare } from "bcryptjs";
 import { eq } from "drizzle-orm";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getDb } from "@/db/client";
 import { adminUsers } from "@/db/schema";
 import { assertSameOrigin } from "@/server/security/origin";
 import { consumeRateLimit } from "@/server/security/rate-limit";
+import { getRequestSource } from "@/server/security/request-source";
 import { createAdminSession, destroyAdminSession } from "./admin-session";
 
 const loginSchema = z.object({
@@ -24,9 +24,8 @@ export async function loginAdminAction(_previous: AdminLoginState, formData: For
   const parsed = loginSchema.safeParse({ email: formData.get("email"), password: formData.get("password"), next: formData.get("next") || "/admin" });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message || "اطلاعات ورود معتبر نیست" };
 
-  const requestHeaders = await headers();
-  const source = requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
-  const limit = consumeRateLimit(`admin-login:${source}:${parsed.data.email}`, 6, 15 * 60 * 1000);
+  const source = await getRequestSource();
+  const limit = await consumeRateLimit(`admin-login:${source}:${parsed.data.email}`, 6, 15 * 60 * 1000);
   if (!limit.allowed) return { error: `تلاش‌های ورود بیش از حد است؛ ${limit.retryAfterSeconds} ثانیه دیگر دوباره امتحان کنید.` };
 
   const rows = await getDb().select().from(adminUsers).where(eq(adminUsers.email, parsed.data.email)).limit(1);

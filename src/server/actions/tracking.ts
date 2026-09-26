@@ -2,12 +2,12 @@
 
 import { createHash, timingSafeEqual } from "node:crypto";
 import { eq, sql } from "drizzle-orm";
-import { headers } from "next/headers";
 import { getDb } from "@/db/client";
 import { orderItems, orders } from "@/db/schema";
 import { rialToToman } from "@/lib/structured-data";
 import { getCustomerSession } from "@/server/auth/customer-session";
 import { consumeRateLimit } from "@/server/security/rate-limit";
+import { getRequestSource } from "@/server/security/request-source";
 import { normalizeIranPhone } from "@/server/validation/checkout";
 import type { OrderStatus, PaymentStatus } from "@/types/store";
 
@@ -28,8 +28,8 @@ export async function trackOrderAction(input: { orderId: string; phone?: string;
   const phone = input.phone ? normalizeIranPhone(input.phone) : "";
   const token = input.token?.trim() || "";
   if (!/^EL-[A-Z0-9-]{5,70}$/.test(orderId) || (phone && !/^09\d{9}$/.test(phone)) || token.length > 200) return { ok: false, message: "اطلاعات پیگیری معتبر نیست" };
-  const source = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
-  const limit = consumeRateLimit(`tracking:${source}`, 20, 10 * 60 * 1000);
+  const source = await getRequestSource();
+  const limit = await consumeRateLimit(`tracking:${source}`, 20, 10 * 60 * 1000);
   if (!limit.allowed) return { ok: false, message: "تعداد درخواست‌های پیگیری بیش از حد است" };
 
   const [order] = await getDb().select().from(orders).where(eq(orders.id, orderId)).limit(1);

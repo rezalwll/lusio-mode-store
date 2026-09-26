@@ -2,14 +2,14 @@
 
 import { createHash, randomInt, randomUUID, timingSafeEqual } from "node:crypto";
 import { and, eq, gt, isNull } from "drizzle-orm";
-import { headers } from "next/headers";
 import { getDb } from "@/db/client";
 import { customerOtpChallenges, customers } from "@/db/schema";
+import { sendOtpMessage } from "@/server/messaging/service";
 import { assertSameOrigin } from "@/server/security/origin";
 import { consumeRateLimit } from "@/server/security/rate-limit";
+import { getRequestSource } from "@/server/security/request-source";
 import { normalizeIranPhone } from "@/server/validation/checkout";
 import { createCustomerSession, destroyCustomerSession } from "./customer-session";
-import { getOtpProvider } from "./otp-provider";
 
 const OTP_TTL_MS = 5 * 60 * 1000;
 
@@ -24,21 +24,18 @@ function sameHash(left: Buffer, rightHex: string) {
   return left.length === right.length && timingSafeEqual(left, right);
 }
 
-async function requestSource() {
-  return (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
-}
-
 export async function requestCustomerOtpAction(input: { phone: string }): Promise<{ ok: true; challengeId: string } | { ok: false; message: string }> {
   await assertSameOrigin();
   const phone = normalizeIranPhone(input.phone);
   if (!/^09\d{9}$/.test(phone)) return { ok: false, message: "شماره موبایل معتبر نیست" };
-  const limit = consumeRateLimit(`customer-otp-request:${await requestSource()}:${phone}`, 3, 10 * 60 * 1000);
+  const limit = await consumeRateLimit(`customer-otp-request:${await getRequestSource()}:${phone}`, 3, 10 * 60 * 1000);
   if (!limit.allowed) return { ok: false, message: `درخواست‌های ورود بیش از حد است؛ ${limit.retryAfterSeconds} ثانیه دیگر تلاش کنید.` };
   const challengeId = randomUUID();
   const code = String(randomInt(100_000, 1_000_000));
   try {
     await getDb().insert(customerOtpChallenges).values({ id: challengeId, phone, codeHash: otpHash(challengeId, phone, code).toString("hex"), expiresAt: new Date(Date.now() + OTP_TTL_MS) });
-    await getOtpProvider().send(phone, code);
+    const delivery = await sendOtpMessage(phone, code);
+    if (!delivery.ok) throw new Error(delivery.message);
     return { ok: true, challengeId };
   } catch (error) {
     await getDb().delete(customerOtpChallenges).where(eq(customerOtpChallenges.id, challengeId)).catch(() => undefined);
@@ -51,7 +48,7 @@ export async function verifyCustomerOtpAction(input: { phone: string; challengeI
   await assertSameOrigin();
   const phone = normalizeIranPhone(input.phone);
   if (!/^09\d{9}$/.test(phone) || !/^[0-9]{6}$/.test(input.code) || !/^[0-9a-f-]{36}$/i.test(input.challengeId)) return { ok: false, message: "کد ورود معتبر نیست" };
-  const limit = consumeRateLimit(`customer-otp-verify:${await requestSource()}:${phone}`, 8, 10 * 60 * 1000);
+  const limit = await consumeRateLimit(`customer-otp-verify:${await getRequestSource()}:${phone}`, 8, 10 * 60 * 1000);
   if (!limit.allowed) return { ok: false, message: "تلاش‌های ناموفق بیش از حد است؛ بعداً دوباره امتحان کنید" };
 
   const result = await getDb().transaction(async (tx) => {
