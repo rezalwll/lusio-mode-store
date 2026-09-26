@@ -1,5 +1,7 @@
 import "server-only";
 
+import { getMessageEnvironment } from "@/server/config/env";
+
 export type MessageSendResult =
   | { ok: true; status: "sent"; providerMessageId?: string }
   | { ok: false; code: string; message: string; retryable: boolean };
@@ -30,11 +32,10 @@ class DevelopmentMessageProvider implements MessageProvider {
 class WebhookMessageProvider implements MessageProvider {
   readonly key = "webhook";
   private async send(payload: Record<string, unknown>): Promise<MessageSendResult> {
-    const url = process.env.MESSAGE_WEBHOOK_URL?.trim() || process.env.OTP_WEBHOOK_URL?.trim();
-    const token = process.env.MESSAGE_WEBHOOK_TOKEN?.trim() || process.env.OTP_WEBHOOK_TOKEN?.trim();
-    if (!url || !token) return { ok: false, code: "configuration_incomplete", message: "Message webhook configuration is incomplete", retryable: false };
+    const config = getMessageEnvironment();
+    if (config.provider !== "webhook" || typeof config.webhookUrl !== "string" || typeof config.webhookToken !== "string") return { ok: false, code: "configuration_incomplete", message: "Message webhook configuration is incomplete", retryable: false };
     try {
-      const response = await fetch(url, { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${token}` }, body: JSON.stringify(payload), signal: AbortSignal.timeout(10_000) });
+      const response = await fetch(config.webhookUrl, { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${config.webhookToken}` }, body: JSON.stringify(payload), signal: AbortSignal.timeout(10_000) });
       const body = await response.json().catch(() => ({})) as { messageId?: unknown; id?: unknown; error?: unknown };
       if (!response.ok) return { ok: false, code: `http_${response.status}`, message: typeof body.error === "string" ? body.error.slice(0, 300) : `Message provider rejected request (${response.status})`, retryable: response.status >= 500 };
       const providerMessageId = typeof body.messageId === "string" ? body.messageId : typeof body.id === "string" ? body.id : undefined;
@@ -52,7 +53,7 @@ class WebhookMessageProvider implements MessageProvider {
 }
 
 export function getMessageProvider(): MessageProvider {
-  const provider = (process.env.MESSAGE_PROVIDER || process.env.OTP_PROVIDER || "development").trim().toLowerCase();
+  const provider = getMessageEnvironment().provider;
   if (provider === "development") return new DevelopmentMessageProvider();
   if (provider === "webhook") return new WebhookMessageProvider();
   if (provider === "none" || provider === "disabled") throw new Error("Message provider is disabled");

@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { mkdir, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { getMediaEnvironment } from "@/server/config/env";
 
 export interface StoredMediaObject {
   objectKey: string;
@@ -44,22 +45,17 @@ class LocalMediaStorage implements MediaStorage {
   }
 }
 
-function requiredEnvironment(name: string) {
-  const value = process.env[name]?.trim();
-  if (!value) throw new Error(`${name} is required for S3 media storage`);
-  return value;
-}
-
 class S3MediaStorage implements MediaStorage {
-  private readonly bucket = requiredEnvironment("S3_BUCKET");
-  private readonly publicBaseUrl = requiredEnvironment("S3_PUBLIC_BASE_URL").replace(/\/$/, "");
+  private readonly config = getMediaEnvironment();
+  private readonly bucket = this.config.driver === "s3" ? this.config.bucket : "";
+  private readonly publicBaseUrl = this.config.driver === "s3" ? this.config.publicBaseUrl : "";
   private readonly client = new S3Client({
-    region: process.env.S3_REGION || "auto",
-    endpoint: process.env.S3_ENDPOINT || undefined,
-    forcePathStyle: process.env.S3_FORCE_PATH_STYLE === "true",
+    region: this.config.driver === "s3" ? this.config.region : "auto",
+    endpoint: this.config.driver === "s3" ? this.config.endpoint : undefined,
+    forcePathStyle: this.config.driver === "s3" && this.config.forcePathStyle,
     credentials: {
-      accessKeyId: requiredEnvironment("S3_ACCESS_KEY_ID"),
-      secretAccessKey: requiredEnvironment("S3_SECRET_ACCESS_KEY"),
+      accessKeyId: this.config.driver === "s3" ? this.config.accessKeyId : "",
+      secretAccessKey: this.config.driver === "s3" ? this.config.secretAccessKey : "",
     },
   });
 
@@ -83,7 +79,6 @@ class S3MediaStorage implements MediaStorage {
 let storage: MediaStorage | undefined;
 
 export function getMediaStorage(): MediaStorage {
-  if (!storage) storage = process.env.MEDIA_STORAGE_DRIVER === "s3" ? new S3MediaStorage() : new LocalMediaStorage();
+  if (!storage) storage = getMediaEnvironment().driver === "s3" ? new S3MediaStorage() : new LocalMediaStorage();
   return storage;
 }
-

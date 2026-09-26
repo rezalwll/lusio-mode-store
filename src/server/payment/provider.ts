@@ -1,5 +1,7 @@
 import "server-only";
 
+import { getPaymentEnvironment } from "@/server/config/env";
+
 export type ProviderPaymentStatus = "paid" | "pending" | "failed" | "cancelled";
 
 export interface CreatePaymentRequest {
@@ -54,7 +56,7 @@ class UnconfiguredPaymentProvider implements PaymentProvider {
 const unconfiguredProvider = new UnconfiguredPaymentProvider();
 
 export function getConfiguredPaymentProvider(): PaymentProvider {
-  const key = process.env.PAYMENT_PROVIDER?.trim().toLowerCase() || "none";
+  const key = getPaymentEnvironment().provider;
   if (key === "none" || key === "disabled") return unconfiguredProvider;
   throw new Error(`Unsupported PAYMENT_PROVIDER: ${key}`);
 }
