@@ -30,18 +30,19 @@ async function runMaintenance() {
     const now = new Date();
     const otpRetentionCutoff = new Date(now.getTime() - DAY_MS);
     const stalePaymentCutoff = new Date(now.getTime() - DAY_MS);
-    const [adminSessionRows, customerSessionRows, otpRows, rateLimitRows, expiredPaymentRows] = await db.transaction(async (tx) => Promise.all([
-      tx.delete(schema.adminSessions).where(lt(schema.adminSessions.expiresAt, now)).returning({ id: schema.adminSessions.tokenHash }),
-      tx.delete(schema.customerSessions).where(lt(schema.customerSessions.expiresAt, now)).returning({ id: schema.customerSessions.tokenHash }),
-      tx.delete(schema.customerOtpChallenges).where(or(
+    const [adminSessionRows, customerSessionRows, otpRows, rateLimitRows, expiredPaymentRows] = await db.transaction(async (tx) => {
+      const deletedAdminSessions = await tx.delete(schema.adminSessions).where(lt(schema.adminSessions.expiresAt, now)).returning({ id: schema.adminSessions.tokenHash });
+      const deletedCustomerSessions = await tx.delete(schema.customerSessions).where(lt(schema.customerSessions.expiresAt, now)).returning({ id: schema.customerSessions.tokenHash });
+      const deletedOtpChallenges = await tx.delete(schema.customerOtpChallenges).where(or(
         lt(schema.customerOtpChallenges.expiresAt, otpRetentionCutoff),
         and(isNotNull(schema.customerOtpChallenges.consumedAt), lt(schema.customerOtpChallenges.consumedAt, otpRetentionCutoff)),
-      )).returning({ id: schema.customerOtpChallenges.id }),
-      tx.delete(schema.rateLimitBuckets).where(lt(schema.rateLimitBuckets.resetAt, now)).returning({ id: schema.rateLimitBuckets.key }),
-      tx.update(schema.paymentAttempts).set({ status: "expired", failureCode: "maintenance_expired", failureMessage: "Payment attempt expired before verification", updatedAt: now })
+      )).returning({ id: schema.customerOtpChallenges.id });
+      const deletedRateLimitBuckets = await tx.delete(schema.rateLimitBuckets).where(lt(schema.rateLimitBuckets.resetAt, now)).returning({ id: schema.rateLimitBuckets.key });
+      const expiredPaymentAttempts = await tx.update(schema.paymentAttempts).set({ status: "expired", failureCode: "maintenance_expired", failureMessage: "Payment attempt expired before verification", updatedAt: now })
         .where(and(inArray(schema.paymentAttempts.status, ["created", "awaiting_user", "verifying"]), lt(schema.paymentAttempts.updatedAt, stalePaymentCutoff)))
-        .returning({ id: schema.paymentAttempts.id }),
-    ]));
+        .returning({ id: schema.paymentAttempts.id });
+      return [deletedAdminSessions, deletedCustomerSessions, deletedOtpChallenges, deletedRateLimitBuckets, expiredPaymentAttempts] as const;
+    });
     logServer("info", "maintenance.completed", "Maintenance completed", {
       adminSessionsDeleted: adminSessionRows.length,
       customerSessionsDeleted: customerSessionRows.length,
