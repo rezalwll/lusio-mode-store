@@ -18,3 +18,10 @@ export function getDb() {
   }
   return drizzle(pool, { schema });
 }
+
+export async function closeDb() {
+  if (!pool) return;
+  const current = pool;
+  pool = undefined;
+  await current.end();
+}

@@ -20,6 +20,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx src/db/seed/run.ts",
     "db:setup": "npm run db:migrate && npm run db:seed",
+    "maintenance": "NODE_OPTIONS=--conditions=react-server tsx src/server/maintenance/run.ts",
     "test:db": "vitest run --config vitest.db.config.ts"
   },
   "dependencies": {
