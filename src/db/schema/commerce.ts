@@ -249,8 +249,116 @@ export const adminSessions = pgTable(
   (table) => [index("admin_sessions_user").on(table.userId)],
 );
 
+export const paymentAttempts = pgTable(
+  "payment_attempts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    orderId: text("order_id").notNull().references(() => orders.id, { onDelete: "restrict" }),
+    providerKey: text("provider_key").notNull(),
+    amountRial: bigint("amount_rial", { mode: "bigint" }).notNull(),
+    status: text("status").notNull().default("created"),
+    idempotencyKey: text("idempotency_key").notNull().unique(),
+    providerAuthority: text("provider_authority"),
+    providerTransactionId: text("provider_transaction_id"),
+    callbackTokenHash: text("callback_token_hash").notNull().unique(),
+    failureCode: text("failure_code"),
+    failureMessage: text("failure_message"),
+    metadata: jsonb("metadata").notNull().default(sql`'{}'::jsonb`).$type<Record<string, unknown>>(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    verifiedAt: timestamp("verified_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("payment_attempts_order_created").on(table.orderId, table.createdAt),
+    index("payment_attempts_provider_authority").on(table.providerKey, table.providerAuthority),
+    index("payment_attempts_status_updated").on(table.status, table.updatedAt),
+    check("payment_attempts_status_valid", sql`${table.status} IN ('created', 'awaiting_user', 'verifying', 'paid', 'failed', 'cancelled', 'expired')`),
+    check("payment_attempts_amount_positive", sql`${table.amountRial} > 0`),
+  ],
+);
+
+export const paymentEvents = pgTable(
+  "payment_events",
+  {
+    id: serial("id").primaryKey(),
+    paymentAttemptId: uuid("payment_attempt_id").references(() => paymentAttempts.id, { onDelete: "set null" }),
+    orderId: text("order_id").references(() => orders.id, { onDelete: "set null" }),
+    providerKey: text("provider_key").notNull(),
+    eventType: text("event_type").notNull(),
+    deduplicationKey: text("deduplication_key").notNull().unique(),
+    providerEventId: text("provider_event_id"),
+    correlationId: uuid("correlation_id").notNull(),
+    metadata: jsonb("metadata").notNull().default(sql`'{}'::jsonb`).$type<Record<string, unknown>>(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("payment_events_attempt_created").on(table.paymentAttemptId, table.createdAt)],
+);
+
+export const outboundMessages = pgTable(
+  "outbound_messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    customerId: integer("customer_id").references(() => customers.id, { onDelete: "set null" }),
+    phone: text("phone").notNull(),
+    messageType: text("message_type").notNull(),
+    templateKey: text("template_key").notNull(),
+    providerKey: text("provider_key").notNull(),
+    providerMessageId: text("provider_message_id"),
+    status: text("status").notNull().default("queued"),
+    attempts: integer("attempts").notNull().default(0),
+    lastError: text("last_error"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("outbound_messages_phone_created").on(table.phone, table.createdAt),
+    index("outbound_messages_status_updated").on(table.status, table.updatedAt),
+    check("outbound_messages_status_valid", sql`${table.status} IN ('queued', 'sent', 'failed', 'delivered')`),
+    check("outbound_messages_attempts_non_negative", sql`${table.attempts} >= 0`),
+  ],
+);
+
+export const rateLimitBuckets = pgTable(
+  "rate_limit_buckets",
+  {
+    key: text("key").primaryKey(),
+    count: integer("count").notNull().default(0),
+    resetAt: timestamp("reset_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("rate_limit_buckets_reset").on(table.resetAt),
+    check("rate_limit_buckets_count_non_negative", sql`${table.count} >= 0`),
+  ],
+);
+
+export const adminAuditLogs = pgTable(
+  "admin_audit_logs",
+  {
+    id: serial("id").primaryKey(),
+    actorAdminId: uuid("actor_admin_id").references(() => adminUsers.id, { onDelete: "set null" }),
+    actorEmail: text("actor_email").notNull(),
+    action: text("action").notNull(),
+    entityType: text("entity_type").notNull(),
+    entityId: text("entity_id"),
+    metadata: jsonb("metadata").notNull().default(sql`'{}'::jsonb`).$type<Record<string, unknown>>(),
+    source: text("source").notNull(),
+    userAgent: text("user_agent").notNull().default(""),
+    correlationId: uuid("correlation_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("admin_audit_logs_created").on(table.createdAt),
+    index("admin_audit_logs_actor_created").on(table.actorAdminId, table.createdAt),
+    index("admin_audit_logs_entity_created").on(table.entityType, table.entityId, table.createdAt),
+  ],
+);
+
 export const adminUsersRelations = relations(adminUsers, ({ many }) => ({ sessions: many(adminSessions) }));
 export const adminSessionsRelations = relations(adminSessions, ({ one }) => ({ user: one(adminUsers, { fields: [adminSessions.userId], references: [adminUsers.id] }) }));
 export const customersRelations = relations(customers, ({ many }) => ({ orders: many(orders), sessions: many(customerSessions) }));
 export const ordersRelations = relations(orders, ({ one, many }) => ({ customer: one(customers, { fields: [orders.customerId], references: [customers.id] }), items: many(orderItems) }));
 export const orderItemsRelations = relations(orderItems, ({ one }) => ({ order: one(orders, { fields: [orderItems.orderId], references: [orders.id] }) }));
+export const paymentAttemptsRelations = relations(paymentAttempts, ({ one, many }) => ({ order: one(orders, { fields: [paymentAttempts.orderId], references: [orders.id] }), events: many(paymentEvents) }));
+export const paymentEventsRelations = relations(paymentEvents, ({ one }) => ({ attempt: one(paymentAttempts, { fields: [paymentEvents.paymentAttemptId], references: [paymentAttempts.id] }) }));
