@@ -22,6 +22,14 @@ jobs:
       - run: npm run db:check
       - run: npm run build
 
+  container:
+    name: production container
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: docker build --target operations --tag lusio-operations:ci .
+      - run: docker build --target web --tag lusio-web:ci .
+
   e2e:
     name: e2e
     runs-on: ubuntu-latest

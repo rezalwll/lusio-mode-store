@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   images: {
     // Narrow allow-list: all 385 catalog images are absolute https URLs on
     // this single WordPress-uploads host (verified against assets/data).
