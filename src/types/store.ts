@@ -67,6 +67,12 @@ export interface Order {
   total: number;
   status: OrderStatus;
   paymentStatus: PaymentStatus;
+  reservationExpiresAt: string;
+  inventoryReleasedAt?: string;
+  cancelledAt?: string;
+  cancellationReason?: string;
+  paymentReviewRequired: boolean;
+  paymentReviewReason?: string;
   paymentAttempt?: {
     provider: string;
     status: string;

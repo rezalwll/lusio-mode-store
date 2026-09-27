@@ -56,6 +56,12 @@ export async function getOrders(customerId?: number): Promise<Order[]> {
     couponCode: order.couponCode ?? undefined,
     status: orderStatus(order.status),
     paymentStatus: paymentStatus(order.paymentStatus),
+    reservationExpiresAt: order.reservationExpiresAt.toISOString(),
+    inventoryReleasedAt: order.inventoryReleasedAt?.toISOString(),
+    cancelledAt: order.cancelledAt?.toISOString(),
+    cancellationReason: order.cancellationReason ?? undefined,
+    paymentReviewRequired: order.paymentReviewRequired,
+    paymentReviewReason: order.paymentReviewReason ?? undefined,
     paymentAttempt: (() => {
       const attempt = latestAttemptByOrder.get(order.id);
       return attempt ? {
