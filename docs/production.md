@@ -7,6 +7,7 @@ Start from `.env.example`; never commit real credentials. The server validates c
 - Core: `DATABASE_URL`, `APP_ORIGIN`, and `SESSION_COOKIE_SECURE=true` for an HTTPS origin.
 - Proxy: keep `TRUST_PROXY_HEADERS=false` when Next is directly internet-facing. Set it to `true` only when a trusted reverse proxy replaces `X-Forwarded-For`/`X-Real-IP`. The first syntactically valid forwarded address becomes the rate-limit/audit source.
 - Payment: keep `PAYMENT_PROVIDER=none` until a real adapter exists. This mode can create pending orders but cannot start, verify, or fake a successful payment.
+- Reservation: `ORDER_PAYMENT_RESERVATION_MINUTES` controls how long an unpaid order holds inventory and coupon capacity. It must be an integer from 5 to 180; the default is 30 minutes.
 - Messaging: production must use `MESSAGE_PROVIDER=webhook`, `none`, or a future real adapter. `development` is rejected in production. Webhook mode requires `MESSAGE_WEBHOOK_URL`, `MESSAGE_WEBHOOK_TOKEN`, and an `OTP_HASH_SECRET` of at least 32 characters. There is no production fallback to console OTP.
 - Media: `MEDIA_STORAGE_DRIVER=s3` requires all relevant `S3_*` variables. Local storage is suitable only for development/single writable instances.
 - Set `ENABLE_HSTS=true` only after HTTPS is permanent for the domain and subdomains.
@@ -38,14 +39,15 @@ Use additive/backward-compatible migrations whenever possible. Review generated 
 
 ## Maintenance and retention
 
-Run `npm run maintenance` every 10–15 minutes with `DATABASE_URL` and the normal runtime provider configuration. A PostgreSQL advisory lock makes overlapping invocations exit safely. A real failure exits nonzero and emits a structured `maintenance.failed` event.
+Run `npm run maintenance` more frequently than the reservation TTL—recommended every 5 minutes for the default 30-minute TTL—with `DATABASE_URL` and the normal runtime provider configuration. A PostgreSQL advisory lock makes overlapping invocations exit safely. A real failure exits nonzero and emits a structured `maintenance.failed` event. This job is mandatory: without it, abandoned unpaid orders would keep inventory and coupon capacity reserved.
 
-Each run first invokes payment reconciliation. A provider without inquiry support reports a safe skip. It then:
+Order creation immediately decrements product/variant stock and reserves coupon usage while payment remains pending. Each maintenance run first invokes payment reconciliation, then locks and cancels expired unpaid reservations through the same release service used by admin cancellation. A provider without inquiry support reports a safe skip. Release restores product and variant stock, releases reserved coupon usage exactly once, preserves order/payment history, and closes active payment attempts. It then performs transient cleanup:
 
 - deletes expired admin/customer sessions;
 - deletes OTP challenges expired or consumed for more than 24 hours;
 - deletes expired shared rate-limit buckets;
-- marks unverified payment attempts stale for more than 24 hours as `expired`.
+
+Paid orders are never released. If a provider later proves money was captured after an expired reservation was already released, financial truth is retained (`paymentStatus=paid`) while fulfillment stays cancelled; `paymentReviewRequired` is raised for manual refund/resolution and stock or coupon usage is not consumed again.
 
 Orders, order items, coupon redemptions, payment attempts/events, outbound message history, and admin audit logs are durable and are not deleted by this job. Any later archival policy must be explicit; this document makes no legal retention promise.
 
