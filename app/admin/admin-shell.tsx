@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Activity, Bell, ChartNoAxesCombined, ChevronLeft, Images, LayoutDashboard, ListTree, LogOut, Menu, Package, Palette, Percent, Search, Settings, ShoppingCart, Store, Tags, Warehouse, Users, X } from "lucide-react";
+import { Activity, Bell, ChartNoAxesCombined, ChevronLeft, Images, LayoutDashboard, ListTree, LogOut, Menu, Package, Palette, Percent, Search, Settings, ShoppingCart, Store, Tags, UserRoundCog, Warehouse, Users, X } from "lucide-react";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { logoUrl } from "@/lib/assets";
 import { cn } from "@/lib/utils";
@@ -23,6 +23,7 @@ const navigation = [
   { label: "ظاهر و محتوا", to: "/admin/appearance", icon: Palette, exact: false },
   { label: "منو و چیدمان", to: "/admin/navigation", icon: ListTree, exact: false },
   { label: "تنظیمات و محتوا", to: "/admin/settings", icon: Settings, exact: false },
+  { label: "مدیریت تیم", to: "/admin/team", icon: UserRoundCog, exact: false, privileged: true },
   { label: "گزارش فعالیت", to: "/admin/activity", icon: Activity, exact: false, privileged: true },
 ] as const;
 
