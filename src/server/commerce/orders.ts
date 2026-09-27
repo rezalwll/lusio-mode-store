@@ -5,6 +5,9 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 import { getDb } from "@/db/client";
 import { couponRedemptions, coupons, customers, orderItems, orders, products, productVariants, storeSettings } from "@/db/schema";
 import { tomanToRial } from "@/lib/structured-data";
+import { getOrderReservationMinutes } from "@/server/config/env";
+import { createCorrelationId } from "@/server/observability/correlation";
+import { logServer } from "@/server/observability/logger";
 import { evaluateCoupon, shippingCostRial } from "./pricing";
 import { storeSettingsInputSchema } from "@/server/validation/settings";
 import type { CheckoutInput } from "@/server/validation/checkout";
@@ -33,7 +36,7 @@ export interface CreatedOrder {
 export async function createOrder(input: CheckoutInput): Promise<CreatedOrder> {
   const db = getDb();
   try {
-    return await db.transaction(async (tx) => {
+    const result = await db.transaction(async (tx) => {
       const [existing] = await tx.select({ id: orders.id, totalRial: orders.totalRial, paymentStatus: orders.paymentStatus }).from(orders).where(eq(orders.idempotencyKey, input.idempotencyKey)).limit(1);
       if (existing) return { orderId: existing.id, totalRial: existing.totalRial, paymentStatus: "pending" as const, reused: true };
 
@@ -117,6 +120,7 @@ export async function createOrder(input: CheckoutInput): Promise<CreatedOrder> {
 
       const orderId = createOrderId();
       const trackingToken = randomBytes(24).toString("base64url");
+      const reservationExpiresAt = new Date(Date.now() + getOrderReservationMinutes() * 60_000);
       await tx.insert(orders).values({
         id: orderId,
         publicTokenHash: hashToken(trackingToken),
@@ -137,6 +141,7 @@ export async function createOrder(input: CheckoutInput): Promise<CreatedOrder> {
         couponCode: coupon?.code ?? null,
         status: "pending",
         paymentStatus: "pending",
+        reservationExpiresAt,
       });
       await tx.insert(orderItems).values(pricedLines.map((line) => ({
         orderId,
@@ -156,6 +161,8 @@ export async function createOrder(input: CheckoutInput): Promise<CreatedOrder> {
       }
       return { orderId, totalRial, paymentStatus: "pending" as const, trackingToken, reused: false };
     });
+    if (!result.reused) logServer("info", "order.reservation.created", "Order inventory and coupon capacity reserved", { correlationId: createCorrelationId(), orderId: result.orderId, reservationMinutes: getOrderReservationMinutes() });
+    return result;
   } catch (error) {
     const code = typeof error === "object" && error !== null && "code" in error ? String(error.code) : "";
     if (code === "23505") {

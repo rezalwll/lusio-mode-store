@@ -32,6 +32,13 @@ export function getPaymentEnvironment() {
   return { provider };
 }
 
+export function getOrderReservationMinutes() {
+  const raw = process.env.ORDER_PAYMENT_RESERVATION_MINUTES?.trim() || "30";
+  const minutes = Number(raw);
+  if (!Number.isInteger(minutes) || minutes < 5 || minutes > 180) throw new Error("ORDER_PAYMENT_RESERVATION_MINUTES must be an integer between 5 and 180");
+  return minutes;
+}
+
 export function getMessageEnvironment() {
   const provider = (process.env.MESSAGE_PROVIDER || process.env.OTP_PROVIDER || "development").trim().toLowerCase();
   if (!["development", "webhook", "none", "disabled"].includes(provider)) throw new Error(`Unsupported MESSAGE_PROVIDER: ${provider}`);
@@ -66,6 +73,7 @@ export function getMediaEnvironment() {
 export function validateRuntimeEnvironment() {
   getCoreEnvironment();
   getPaymentEnvironment();
+  getOrderReservationMinutes();
   getMessageEnvironment();
   getMediaEnvironment();
 }

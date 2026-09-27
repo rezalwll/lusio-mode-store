@@ -142,6 +142,12 @@ export const orders = pgTable(
     couponCode: text("coupon_code"),
     status: text("status").notNull().default("pending"),
     paymentStatus: text("payment_status").notNull().default("pending"),
+    reservationExpiresAt: timestamp("reservation_expires_at", { withTimezone: true }).notNull(),
+    inventoryReleasedAt: timestamp("inventory_released_at", { withTimezone: true }),
+    cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+    cancellationReason: text("cancellation_reason"),
+    paymentReviewRequired: boolean("payment_review_required").notNull().default(false),
+    paymentReviewReason: text("payment_review_reason"),
     trackingCode: text("tracking_code"),
     internalNote: text("internal_note"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -151,6 +157,7 @@ export const orders = pgTable(
     index("orders_customer_created").on(table.customerId, table.createdAt),
     index("orders_phone_created").on(table.phone, table.createdAt),
     index("orders_status_created").on(table.status, table.createdAt),
+    index("orders_reservation_expiry").on(table.reservationExpiresAt),
     check("orders_status_valid", sql`${table.status} IN ('pending', 'processing', 'shipped', 'delivered', 'cancelled')`),
     check("orders_payment_status_valid", sql`${table.paymentStatus} IN ('pending', 'paid', 'refunded', 'failed')`),
     check("orders_amounts_non_negative", sql`${table.subtotalRial} >= 0 AND ${table.discountRial} >= 0 AND ${table.shippingRial} >= 0 AND ${table.totalRial} >= 0`),
@@ -187,9 +194,14 @@ export const couponRedemptions = pgTable(
     orderId: text("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
     customerId: integer("customer_id").references(() => customers.id, { onDelete: "set null" }),
     discountRial: bigint("discount_rial", { mode: "bigint" }).notNull(),
+    status: text("status").notNull().default("reserved"),
+    releasedAt: timestamp("released_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [uniqueIndex("coupon_redemptions_coupon_order").on(table.couponId, table.orderId)],
+  (table) => [
+    uniqueIndex("coupon_redemptions_coupon_order").on(table.couponId, table.orderId),
+    check("coupon_redemptions_status_valid", sql`${table.status} IN ('reserved', 'consumed', 'released')`),
+  ],
 );
 
 export const storeSettings = pgTable(
