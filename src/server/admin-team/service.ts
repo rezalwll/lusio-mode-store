@@ -7,15 +7,9 @@ import { getDb } from "@/db/client";
 import { adminAuditLogs, adminSessions, adminUsers } from "@/db/schema";
 import { adminAuditValues, type AdminAuditContext } from "@/server/audit/admin-audit";
 import type { AdminRole, AdminSessionUser } from "@/server/auth/admin-session";
+import { adminPasswordSchema } from "./password-policy";
 
 const roles = ["owner", "admin", "staff", "editor"] as const;
-const weakPasswords = new Set(["password", "password123", "123456789012", "qwerty123456", "admin123456", "changeme1234", "change-me-before-production"]);
-
-export const adminPasswordSchema = z.string().min(12, "رمز عبور باید حداقل ۱۲ کاراکتر باشد").max(128, "رمز عبور بیش از حد طولانی است").refine((value) => {
-  const normalized = value.trim().toLowerCase();
-  return !weakPasswords.has(normalized) && new Set(normalized).size >= 5;
-}, "رمز عبور انتخاب‌شده بسیار ضعیف یا آزمایشی است");
-
 export const createAdminMemberSchema = z.object({
   name: z.string().trim().min(2).max(120),
   email: z.email().transform((value) => value.trim().toLowerCase()),

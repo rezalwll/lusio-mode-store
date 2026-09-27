@@ -1,9 +1,8 @@
-import { hash } from "bcryptjs";
-import { eq } from "drizzle-orm";
 import { defaultStoreSettings } from "@/lib/store-defaults";
 import { tomanToRial } from "@/lib/structured-data";
 import type { Db } from "../client";
-import { adminUsers, coupons, navigationItems, storeSettings } from "../schema";
+import { coupons, navigationItems, storeSettings } from "../schema";
+import { bootstrapAdminOwner, readBootstrapEnvironment } from "./admin-bootstrap";
 
 const defaultCoupons = [
   { code: "ELEVEN10", type: "percent" as const, percentValue: 10, fixedAmountRial: null, minOrder: 1_500_000, usageLimit: 200, expiresAt: new Date("2027-12-20T20:30:00.000Z") },
@@ -13,7 +12,6 @@ const defaultCoupons = [
 export interface CommerceSeedCounts {
   coupons: number;
   navigationItems: number;
-  adminUsers: number;
 }
 
 export async function seedCommerce(db: Db): Promise<CommerceSeedCounts> {
@@ -49,23 +47,13 @@ export async function seedCommerce(db: Db): Promise<CommerceSeedCounts> {
       }).onConflictDoNothing();
     }
 
-    let adminCount = 0;
-    const email = process.env.ADMIN_BOOTSTRAP_EMAIL?.trim().toLowerCase();
-    const password = process.env.ADMIN_BOOTSTRAP_PASSWORD;
-    if (email && password) {
-      if (password.length < 12) throw new Error("ADMIN_BOOTSTRAP_PASSWORD must be at least 12 characters");
-      const existing = await tx.select({ id: adminUsers.id }).from(adminUsers).where(eq(adminUsers.email, email)).limit(1);
-      if (!existing.length) {
-        await tx.insert(adminUsers).values({
-          email,
-          name: process.env.ADMIN_BOOTSTRAP_NAME?.trim() || "مدیر فروشگاه",
-          passwordHash: await hash(password, 12),
-          role: "owner",
-        });
-        adminCount = 1;
-      }
-    }
-
-    return { coupons: defaultCoupons.length, navigationItems: navigation.length, adminUsers: adminCount };
+    return { coupons: defaultCoupons.length, navigationItems: navigation.length };
   });
+}
+
+export async function seedBootstrapAdmin(db: Db) {
+  const input = readBootstrapEnvironment(false);
+  if (!input) return 0;
+  const result = await bootstrapAdminOwner(db, input);
+  return result.outcome === "created" ? 1 : 0;
 }
