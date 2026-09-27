@@ -50,10 +50,8 @@ describe("catalog product mapping", () => {
   });
 
   it("maps out-of-stock raws to zero stock and keeps everything else stocked", () => {
-    // DEMO BASELINE BEHAVIOR — TO BE REPLACED BY SERVER INVENTORY:
-    // in-stock items without an explicit low-stock count receive a
-    // deterministic fabricated fallback (12 + index % 19), so tests only
-    // assert the stock/no-stock boundary, never exact fabricated values.
+    // Seed imports turn the source's stock/no-stock flag into a deterministic
+    // initial quantity; PostgreSQL remains runtime inventory authority.
     const rawById = new Map<number, RawStock>();
     for (const raw of [...(rawProducts as RawStock[]), ...(rawProductsExtra as RawStock[])]) {
       if (typeof raw.id === "number" && !rawById.has(raw.id)) rawById.set(raw.id, raw);

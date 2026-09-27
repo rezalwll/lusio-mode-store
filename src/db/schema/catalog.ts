@@ -36,8 +36,7 @@ export const products = pgTable(
     onSale: boolean("on_sale").notNull().default(false),
     colors: text("colors").array().notNull().default(sql`'{}'`),
     sizes: text("sizes").array().notNull().default(sql`'{}'`),
-    // Transitional demo stock semantics (see data-layer plan); the CHECK only
-    // guarantees the invariant every consumer already relies on.
+    // Runtime stock is server-owned; this constraint protects every consumer.
     stock: integer("stock").notNull().default(0),
     active: boolean("active").notNull().default(true),
     featured: boolean("featured").notNull().default(false),

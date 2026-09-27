@@ -11,9 +11,57 @@ Start from `.env.example`; never commit real credentials. The server validates c
 - Messaging: production must use `MESSAGE_PROVIDER=webhook`, `none`, or a future real adapter. `development` is rejected in production. Webhook mode requires `MESSAGE_WEBHOOK_URL`, `MESSAGE_WEBHOOK_TOKEN`, and an `OTP_HASH_SECRET` of at least 32 characters. There is no production fallback to console OTP.
 - Media: `MEDIA_STORAGE_DRIVER=s3` requires all relevant `S3_*` variables. Local storage is suitable only for development/single writable instances.
 - Set `ENABLE_HSTS=true` only after HTTPS is permanent for the domain and subdomains.
-- `ADMIN_BOOTSTRAP_*` is seed-only. Remove those values after the initial administrator is created.
+- `ADMIN_BOOTSTRAP_*` is consumed only by the explicit owner bootstrap shared by `admin:bootstrap` and `db:seed`. Remove those values immediately after the initial owner is created.
 
 The generic message webhook receives provider-neutral JSON. An HTTP 2xx is recorded as `sent`, never `delivered`; a future delivery receipt must explicitly establish delivery.
+
+## Preflight and first owner
+
+Run `npm run env:check` in the release environment before migration or traffic shift. It validates syntax, provider selection, cookie policy, reservation TTL, and required S3/message settings without connecting to PostgreSQL or calling payment, SMS, or object-storage providers. Success output contains only provider names and non-secret operational values; failure exits nonzero and never prints configured secret values. Database connectivity is checked separately by `/api/health/ready`.
+
+Create the first owner once, after migrations, with credentials injected by the deployment secret manager:
+
+```bash
+ADMIN_BOOTSTRAP_EMAIL=owner@example.com \
+ADMIN_BOOTSTRAP_PASSWORD='a-unique-long-random-password' \
+ADMIN_BOOTSTRAP_NAME='Store owner' \
+npm run admin:bootstrap
+```
+
+The command requires both email and password, enforces the admin password policy, and uses a database lock. It creates one owner only when no owner or administrator exists; otherwise it refuses without changing any account or password. Remove all `ADMIN_BOOTSTRAP_*` secrets from the runtime environment after success. There is no default production credential. `db:seed` uses the same guarded operation only when these variables are explicitly present.
+
+## Container and process contract
+
+The multi-stage `Dockerfile` provides two release targets from Node 24:
+
+- `web` (the default target) contains only the standalone Next runtime and static/public assets, runs as the non-root `nextjs` user, listens on port `8080`, and probes `/api/health/live`.
+- `operations` contains the release source and locked Node dependencies, runs as the non-root `node` user, and is for one-shot migrations/bootstrap and the external scheduler. It is not a public web service.
+
+Build both immutable images from the same commit:
+
+```bash
+docker build --target web -t registry.example/lusio-web:RELEASE_SHA .
+docker build --target operations -t registry.example/lusio-operations:RELEASE_SHA .
+```
+
+The vendor-neutral production topology is:
+
+- **WEB:** one or more `web` containers, port `8080`, behind an HTTPS reverse proxy/load balancer. Liveness is `GET /api/health/live`; readiness is `GET /api/health/ready`.
+- **DATABASE:** external PostgreSQL reached through `DATABASE_URL`. PostgreSQL is not bundled in either application image.
+- **CRON:** an external scheduler starts `operations npm run maintenance` about every five minutes. Cron never runs inside a web container.
+- **OBJECT STORAGE:** an external S3-compatible service with `MEDIA_STORAGE_DRIVER=s3`. Local uploads are development-only and are not durable or shared across replicas.
+
+Inject environment variables at container start, never at image build. At minimum, production needs `DATABASE_URL`, `APP_ORIGIN`, `SESSION_COOKIE_SECURE=true`, `PAYMENT_PROVIDER=none`, a non-development `MESSAGE_PROVIDER`, and `MEDIA_STORAGE_DRIVER=s3` plus its `S3_*` settings. Configure proxy flags, HSTS, OTP hash secret, and provider webhook values according to the runtime configuration section above.
+
+Run migrations exactly once before shifting traffic, not in every web replica:
+
+```bash
+docker run --rm --env-file /secure/runtime.env registry.example/lusio-operations:RELEASE_SHA npm run env:check
+docker run --rm --env-file /secure/runtime.env registry.example/lusio-operations:RELEASE_SHA npm run db:migrate
+docker run -d --env-file /secure/runtime.env -p 8080:8080 registry.example/lusio-web:RELEASE_SHA
+```
+
+For a non-container deployment, the equivalent release sequence is `npm ci`, `npm run env:check`, `npm run db:migrate`, then `npm run start`. The scheduler runs `npm run maintenance` independently from the same release. Persist PostgreSQL and S3 data externally; application containers are disposable.
 
 ## Release and migration sequence
 
@@ -101,3 +149,40 @@ No real SMS vendor is currently connected. `MESSAGE_PROVIDER=none` fails OTP cle
 ## Operational rollback and incident notes
 
 Structured logs include event names and correlation IDs for payment, media, checkout, messaging, health, and maintenance paths. Admin activity records identify actor, action, entity, source and correlation ID without passwords, session tokens, OTP values, or provider secrets. During an incident, use the correlation ID to join application logs with payment events and admin activity.
+
+## Legacy and demo runtime audit
+
+- Browser persistence is limited to validated cart identifiers/quantities and an entered coupon code. Products, inventory, customers, orders, settings, administrators, sessions, and audit records are PostgreSQL-owned.
+- `assets/data` catalog JSON is an import/seed source and test oracle only; active storefront queries have no static JSON fallback.
+- The old root HTML files and `assets/js/app.js` are retained migration references and are not served by the Next application. Their historical local-cart/mock-checkout code is not in the production route graph.
+- There are no hardcoded production admin credentials. `.env.example` values are development placeholders, and the bootstrap password policy rejects the documented placeholder.
+- `PAYMENT_PROVIDER=none` fails closed and cannot report payment success. No fake paid path is active.
+- Development OTP logging exists only for local development and is rejected when `NODE_ENV=production`; production has no console-OTP fallback.
+- No mock/random analytics implementation is active. Random UUIDs are used only for identifiers/correlation data.
+
+## Final internal readiness checklist
+
+Before first deploy:
+
+- [ ] External PostgreSQL is ready and backed up.
+- [ ] Production environment passes `npm run env:check`.
+- [ ] Migrations ran once from the release operations image.
+- [ ] Initial owner was created with `npm run admin:bootstrap`, then bootstrap secrets were removed.
+- [ ] External S3-compatible storage is configured and upload/read behavior is verified.
+- [ ] HTTPS and the trusted reverse-proxy policy are configured.
+- [ ] External maintenance cron runs about every five minutes.
+- [ ] Database and object-storage backups, retention, and restore drills are configured.
+- [ ] Liveness and readiness endpoints are configured in the orchestrator.
+
+Before external integrations:
+
+- [ ] Payment remains `PAYMENT_PROVIDER=none`.
+- [ ] Messaging remains `none`/`disabled`, a reviewed generic webhook, or local-only `development` according to environment.
+- [ ] No fake payment success or production OTP disclosure path exists.
+
+After vendors are chosen:
+
+- [ ] Implement the payment adapter and SMS adapter against their existing internal interfaces.
+- [ ] Set provider credentials, callback secrets, and message template IDs through the secret manager.
+- [ ] Verify success, failure, retries, idempotency, callbacks, and receipts in vendor sandboxes.
+- [ ] Switch production provider configuration only after sandbox and operational review pass.
